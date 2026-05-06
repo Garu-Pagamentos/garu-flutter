@@ -14,7 +14,7 @@ enum GaruErrorCode {
 
 /// Base class for every error thrown by the SDK.
 abstract class GaruError implements Exception {
-  GaruError(this.message, {this.cause});
+  GaruError({required this.message, this.cause});
 
   final String message;
   final Object? cause;
@@ -27,12 +27,12 @@ abstract class GaruError implements Exception {
 /// HTTP error with structured fields parsed from the response.
 class GaruApiError extends GaruError {
   GaruApiError({
-    required String message,
+    required super.message,
     required this.status,
     this.requestId,
     this.body,
     super.cause,
-  }) : super(message);
+  });
 
   final int status;
   final String? requestId;
@@ -51,24 +51,33 @@ class GaruApiError extends GaruError {
 }
 
 class GaruAuthenticationError extends GaruApiError {
-  GaruAuthenticationError({required super.message, super.requestId, super.body})
-      : super(status: 401);
+  GaruAuthenticationError({
+    required String message,
+    String? requestId,
+    Object? body,
+  }) : super(message: message, status: 401, requestId: requestId, body: body);
 }
 
 class GaruPermissionError extends GaruApiError {
-  GaruPermissionError({required super.message, super.requestId, super.body})
-      : super(status: 403);
+  GaruPermissionError({
+    required String message,
+    String? requestId,
+    Object? body,
+  }) : super(message: message, status: 403, requestId: requestId, body: body);
 }
 
 class GaruNotFoundError extends GaruApiError {
-  GaruNotFoundError({required super.message, super.requestId, super.body})
-      : super(status: 404);
+  GaruNotFoundError({
+    required String message,
+    String? requestId,
+    Object? body,
+  }) : super(message: message, status: 404, requestId: requestId, body: body);
 }
 
 class GaruValidationError extends GaruApiError {
   GaruValidationError({
     required super.message,
-    required int super.status,
+    required super.status,
     super.requestId,
     super.body,
   });
@@ -77,11 +86,11 @@ class GaruValidationError extends GaruApiError {
 /// 429. Carries `retryAfterSec` parsed from `Retry-After` when present.
 class GaruRateLimitError extends GaruApiError {
   GaruRateLimitError({
-    required super.message,
+    required String message,
     this.retryAfterSec,
-    super.requestId,
-    super.body,
-  }) : super(status: 429);
+    String? requestId,
+    Object? body,
+  }) : super(message: message, status: 429, requestId: requestId, body: body);
 
   final int? retryAfterSec;
 }
@@ -89,7 +98,7 @@ class GaruRateLimitError extends GaruApiError {
 class GaruServerError extends GaruApiError {
   GaruServerError({
     required super.message,
-    required int super.status,
+    required super.status,
     super.requestId,
     super.body,
   });
@@ -97,7 +106,7 @@ class GaruServerError extends GaruApiError {
 
 /// Network or socket-level failure (DNS, connection refused, timeout).
 class GaruConnectionError extends GaruError {
-  GaruConnectionError({required String message, super.cause}) : super(message);
+  GaruConnectionError({required super.message, super.cause});
 
   @override
   GaruErrorCode get code => GaruErrorCode.connection;
@@ -106,7 +115,7 @@ class GaruConnectionError extends GaruError {
 /// Webhook signature verification failed — payload was tampered with or
 /// the wrong secret was used.
 class GaruSignatureVerificationError extends GaruError {
-  GaruSignatureVerificationError({required String message}) : super(message);
+  GaruSignatureVerificationError({required super.message});
 
   @override
   GaruErrorCode get code => GaruErrorCode.signatureVerification;
