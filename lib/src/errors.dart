@@ -52,26 +52,26 @@ class GaruApiError extends GaruError {
 
 class GaruAuthenticationError extends GaruApiError {
   GaruAuthenticationError({
-    required String message,
-    String? requestId,
-    Object? body,
-  }) : super(message: message, status: 401, requestId: requestId, body: body);
+    required super.message,
+    super.requestId,
+    super.body,
+  }) : super(status: 401);
 }
 
 class GaruPermissionError extends GaruApiError {
   GaruPermissionError({
-    required String message,
-    String? requestId,
-    Object? body,
-  }) : super(message: message, status: 403, requestId: requestId, body: body);
+    required super.message,
+    super.requestId,
+    super.body,
+  }) : super(status: 403);
 }
 
 class GaruNotFoundError extends GaruApiError {
   GaruNotFoundError({
-    required String message,
-    String? requestId,
-    Object? body,
-  }) : super(message: message, status: 404, requestId: requestId, body: body);
+    required super.message,
+    super.requestId,
+    super.body,
+  }) : super(status: 404);
 }
 
 class GaruValidationError extends GaruApiError {
@@ -86,11 +86,11 @@ class GaruValidationError extends GaruApiError {
 /// 429. Carries `retryAfterSec` parsed from `Retry-After` when present.
 class GaruRateLimitError extends GaruApiError {
   GaruRateLimitError({
-    required String message,
+    required super.message,
     this.retryAfterSec,
-    String? requestId,
-    Object? body,
-  }) : super(message: message, status: 429, requestId: requestId, body: body);
+    super.requestId,
+    super.body,
+  }) : super(status: 429);
 
   final int? retryAfterSec;
 }

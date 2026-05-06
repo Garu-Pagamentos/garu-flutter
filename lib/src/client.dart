@@ -2,6 +2,10 @@ import 'package:http/http.dart' as http;
 
 import 'http.dart';
 import 'resources/charges.dart';
+import 'resources/customers.dart';
+import 'resources/meta.dart';
+import 'resources/products.dart';
+import 'resources/scheduled_charges.dart';
 import 'webhooks.dart';
 
 /// Configuration for [Garu]. All fields except [apiKey] have sensible defaults.
@@ -50,13 +54,20 @@ class Garu {
           client: options.httpClient,
         ) {
     charges = Charges(_http);
+    customers = Customers(_http);
+    products = Products(_http);
+    scheduledCharges = ScheduledCharges(_http);
+    meta = Meta(_http);
   }
 
   final HttpRunner _http;
   late final Charges charges;
+  late final Customers customers;
+  late final Products products;
+  late final ScheduledCharges scheduledCharges;
+  late final Meta meta;
 
-  /// Webhook signature verification helpers (no client instance required;
-  /// also exposed as a static method on [Garu] itself).
+  /// Webhook signature verification helpers (no client instance required).
   static const GaruWebhooks webhooks = GaruWebhooks();
 
   /// Release the underlying HTTP client. Call when the SDK is no longer

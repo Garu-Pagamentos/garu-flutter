@@ -19,5 +19,21 @@ library;
 
 export 'src/client.dart' show Garu, GaruOptions;
 export 'src/errors.dart';
-export 'src/resources/charges.dart' show Charges, CustomerInput, CardInput, RefundParams;
-export 'src/webhooks.dart' show GaruWebhooks, VerifyWebhookParams, VerifiedWebhook;
+export 'src/failure_codes.dart' show GaruFailureCode;
+export 'src/models/charge.dart' show Charge;
+export 'src/models/customer.dart' show Customer;
+export 'src/models/paginated.dart' show PaginatedList, PaginationMeta;
+export 'src/models/product.dart' show Product, ProductPortalConfig, SetProductPortalConfigParams;
+export 'src/models/scheduled_charge.dart'
+    show
+        ScheduledChargeAttempt,
+        ScheduledChargeAttemptSource,
+        ScheduledChargeAttemptStatus,
+        ScheduledChargeRecord;
+export 'src/resources/charges.dart' show Charges, CardInput, CustomerInput, RefundParams;
+export 'src/resources/customers.dart' show Customers, CustomerParams;
+export 'src/resources/meta.dart' show Meta;
+export 'src/resources/products.dart' show Products, ProductPortalConfigResource;
+export 'src/resources/scheduled_charges.dart'
+    show CreateScheduledChargeParams, ScheduledCharges;
+export 'src/webhooks.dart' show GaruWebhooks, VerifiedWebhook, VerifyWebhookParams;

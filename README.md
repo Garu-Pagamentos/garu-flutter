@@ -1,15 +1,15 @@
 # Garu — Dart / Flutter SDK
 
-Brazilian payment gateway. Charges (PIX / boleto / credit card), webhook verification, error hierarchy, idempotent retries.
+Brazilian payment gateway. Charges (PIX / boleto / credit card), customers, products + portal customization, scheduled charges (one-time and recurring), webhook signature verification.
 
-> **Status: `0.1.0-alpha`.** This package is a **starter scaffold** — it is **not yet at parity** with [`@garuhq/node`](https://www.npmjs.com/package/@garuhq/node). Public API is **not frozen** until v1.0.0. See [CHANGELOG.md](./CHANGELOG.md) for the full TODO list. For a production integration today, prefer `@garuhq/node` from a backend service and call it from your Flutter app via your own API.
+> **Status: `0.2.0`.** Feature-complete with [`@garuhq/node@0.8.0`](https://www.npmjs.com/package/@garuhq/node) for the v0.8.0 backend surface. Public API still **not frozen** until v1.0.0 — minor breakages possible. Validated with `dart analyze` and 22 passing unit tests on Dart 3.11.5.
 
 ## Install
 
 ```yaml
 # pubspec.yaml
 dependencies:
-  garu: ^0.1.0
+  garu: 0.2.0
 ```
 
 ## Quickstart
@@ -118,16 +118,85 @@ try {
 
 The SDK retries automatically on `GaruConnectionError`, `408`, `429`, and `5xx` responses with exponential backoff + full jitter (max ~8s). Honors `Retry-After`. Never retries `4xx` validation errors.
 
-## What's NOT in v0.1.0
+## Customers
 
-These ship in `@garuhq/node` already and will land here before v1.0.0:
+```dart
+final customer = await garu.customers.create(const CustomerParams(
+  name: 'Maria Silva',
+  email: 'maria@exemplo.com.br',
+  document: '12345678909',
+  phone: '11987654321',
+  personType: 'fisica',
+));
 
-- `customers` resource (CRUD + billing email override)
-- `products` resource (list/get + per-product portal config — B2B2C primitive)
-- `scheduledCharges` resource (one-time + recurring + listAttempts billing audit)
-- `meta` resource (discover supported payment methods + webhook events)
-- Strongly-typed models for `Charge`, `Customer`, `Product`, `ScheduledChargeRecord`, `GaruFailureCode` enum
-- Card tokenization helpers (cycle 1 interactive flow)
+await garu.customers.setBillingEmailOverride(customer.id, 'cobranca@exemplo.com.br');
+```
+
+## Products + portal customization (B2B2C)
+
+```dart
+final products = await garu.products.list(search: 'curso', limit: 10);
+
+// Per-coach branding under one Seller account (Atletia-style B2B2C)
+await garu.products.portalConfig.set(57, const SetProductPortalConfigParams(
+  businessName: 'Coach Maria — Corrida & Trilha',
+  primaryColor: '#257264',
+  logoUrl: 'https://cdn.exemplo.com/coaches/maria.png',
+));
+
+// Read or fall through to seller-level config
+final cfg = await garu.products.portalConfig.get(57);
+```
+
+## Scheduled charges
+
+```dart
+// Recurring with 7-day trial
+final series = await garu.scheduledCharges.create(const CreateScheduledChargeParams(
+  customerId: 42,
+  productId: 17,
+  amount: 49.9,
+  type: 'recurring',
+  dueDate: '2026-06-01',
+  methods: ['card', 'pix'],
+  recurrence: {'interval': 'monthly'},
+  trialDays: 7,
+));
+
+// Per-attempt billing audit (SPEC §4.2). Each attempt carries the canonical
+// failureCode for declines.
+final attempts = await garu.scheduledCharges.listAttempts(series.id, cycleNumber: 3);
+final declines = attempts.data
+    .where((a) => a.status == ScheduledChargeAttemptStatus.declined)
+    .toList();
+
+// GaruFailureCode helpers route permanent vs transient failures
+final permanentFailures = declines.where((a) => a.failureCode?.isPermanent == true);
+```
+
+## Failure codes
+
+```dart
+import 'package:garu/garu.dart';
+
+void handleCycleFailed(GaruFailureCode? code) {
+  if (code?.isPermanent ?? false) {
+    // ask the customer for a new card
+  } else {
+    // Garu's retry cron will keep trying — relax
+  }
+}
+```
+
+Every `transaction.payment.failed`, `scheduled_charge.cycle_failed`, and `listAttempts` row carries `failureCode` (canonical enum, gateway-independent), `failureReason` (PT-BR human-readable), and `gatewayFailureCode` (raw ABECS for forensics). Full table at [docs.garu.com.br/api-reference/webhooks/codigos-de-falha](https://docs.garu.com.br/api-reference/webhooks/codigos-de-falha).
+
+## What's NOT in v0.2.0
+
+These remain TODO before v1.0.0:
+
+- Strongly-typed event-timeline models for `scheduledCharges.get` detail bundle (currently returns raw `Map<String, dynamic>`)
+- Multi-value status filter on `scheduledCharges.list` (currently passes first value only)
+- Card tokenization helpers (today: pass raw card to `charges.create`; the backend tokenizes via Celcoin)
 - A Flutter example app
 
 ## Contributing
