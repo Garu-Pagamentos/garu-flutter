@@ -54,7 +54,7 @@ class ProductPortalConfig {
     this.raw = const {},
   });
 
-  final int productId;
+  final String productId;
   final String? businessName;
   final String? logoUrl;
   final String? primaryColor;
@@ -74,7 +74,7 @@ class ProductPortalConfig {
   final Map<String, dynamic> raw;
 
   factory ProductPortalConfig.fromJson(Map<String, dynamic> json) => ProductPortalConfig(
-        productId: (json['productId'] as num?)?.toInt() ?? 0,
+        productId: (json['productId'] as num?)?.toString() ?? '',
         businessName: json['businessName'] as String?,
         logoUrl: json['logoUrl'] as String?,
         primaryColor: json['primaryColor'] as String?,

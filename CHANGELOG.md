@@ -1,3 +1,16 @@
+## 0.3.0
+
+Tracks Garu backend v0.10.0. Per-product portal-config endpoints now accept the product UUID in addition to the legacy numeric id.
+
+**Breaking:**
+- `products.portalConfig.{get,set,patch,clear}` signature changed from `int productId` to `String productId`. Pass the product UUID (preferred — same identifier returned by `products.list()` and webhook payloads) or convert legacy integer ids with `'$id'`.
+- `ProductPortalConfig.productId` field type changed from `int` to `String` for symmetry with the request signature — round-tripping a returned `productId` no longer requires manual conversion.
+
+**Security:**
+- URL path interpolation now goes through `Uri.encodeComponent(productId)` to prevent query/fragment-segment injection (`?`, `#`, `/` in productId would otherwise corrupt the constructed URL).
+
+**Why:** integer ids are sequential and enumerable. UUIDs are the public-facing identifier across the rest of the API; this brings portal-config in line.
+
 ## 0.2.0
 
 Full feature parity with `@garuhq/node@0.8.0`. Public API still pre-1.0 — breaking changes possible until v1.0.0, but the surface is now complete enough for production integrations.

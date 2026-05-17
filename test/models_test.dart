@@ -128,7 +128,7 @@ void main() {
   });
 
   group('ProductPortalConfig + SetProductPortalConfigParams', () {
-    test('parses persisted config', () {
+    test('parses persisted config — productId arrives as String for symmetry with request', () {
       final c = ProductPortalConfig.fromJson({
         'productId': 57,
         'businessName': 'Coach Maria',
@@ -136,7 +136,7 @@ void main() {
         'allowCancelSubscription': true,
         'requireCancelReason': false,
       });
-      expect(c.productId, 57);
+      expect(c.productId, '57');
       expect(c.businessName, 'Coach Maria');
       expect(c.primaryColor, '#257264');
       expect(c.allowCancelSubscription, isTrue);
@@ -148,6 +148,19 @@ void main() {
         primaryColor: '#888',
       );
       expect(params.toJson(), {'primaryColor': '#888'});
+    });
+  });
+
+  group('Uri.encodeComponent guard — productId path injection', () {
+    test('encodes ?, #, / so they cannot corrupt the URL path', () {
+      expect(Uri.encodeComponent('57?admin=true'), '57%3Fadmin%3Dtrue');
+      expect(Uri.encodeComponent('57#frag'), '57%23frag');
+      expect(Uri.encodeComponent('../charges'), '..%2Fcharges');
+    });
+
+    test('UUIDs round-trip unchanged (no escaping needed for hex-and-dash)', () {
+      const uuid = '00d6d5d1-b094-4546-a49a-f9864e822c3c';
+      expect(Uri.encodeComponent(uuid), uuid);
     });
   });
 }
