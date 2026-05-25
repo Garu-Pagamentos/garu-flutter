@@ -26,6 +26,8 @@ export 'src/models/paginated.dart' show PaginatedList, PaginationMeta;
 export 'src/models/product.dart' show Product, ProductPortalConfig, SetProductPortalConfigParams;
 export 'src/models/scheduled_charge.dart'
     show
+        ChargeNowOutcome,
+        ChargeNowResult,
         ScheduledChargeAttempt,
         ScheduledChargeAttemptSource,
         ScheduledChargeAttemptStatus,

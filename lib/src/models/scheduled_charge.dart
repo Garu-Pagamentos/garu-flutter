@@ -17,6 +17,7 @@ class ScheduledChargeRecord {
     this.recurrence,
     this.trialEndsAt,
     this.cancelAtPeriodEnd,
+    this.maxRecoveryDays,
     this.raw = const {},
   });
 
@@ -33,6 +34,10 @@ class ScheduledChargeRecord {
   final Map<String, dynamic>? recurrence;
   final DateTime? trialEndsAt;
   final bool? cancelAtPeriodEnd;
+
+  /// Days the gateway keeps retrying / accepting payment for a missed cycle
+  /// before giving up. `null` when the series uses the system default (14).
+  final int? maxRecoveryDays;
 
   final Map<String, dynamic> raw;
 
@@ -53,6 +58,91 @@ class ScheduledChargeRecord {
         recurrence: json['recurrence'] as Map<String, dynamic>?,
         trialEndsAt: _parseDate(json['trialEndsAt']),
         cancelAtPeriodEnd: json['cancelAtPeriodEnd'] as bool?,
+        maxRecoveryDays: (json['maxRecoveryDays'] as num?)?.toInt(),
+        raw: json,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'sellerId': sellerId,
+        'customerId': customerId,
+        'amount': amount,
+        'type': type,
+        'status': status,
+        'dueDate': dueDate,
+        if (productId != null) 'productId': productId,
+        'methods': methods,
+        if (paymentMethodId != null) 'paymentMethodId': paymentMethodId,
+        if (recurrence != null) 'recurrence': recurrence,
+        if (trialEndsAt != null) 'trialEndsAt': trialEndsAt!.toIso8601String(),
+        if (cancelAtPeriodEnd != null) 'cancelAtPeriodEnd': cancelAtPeriodEnd,
+        if (maxRecoveryDays != null) 'maxRecoveryDays': maxRecoveryDays,
+      };
+}
+
+/// Outcome of [ScheduledCharges.chargeNow] — what the gateway did when asked
+/// to dispatch a cycle immediately instead of on its due date.
+enum ChargeNowOutcome {
+  /// The charge + customer notification were dispatched now.
+  dispatched('dispatched'),
+
+  /// This cycle had already gone out — nothing was re-charged (idempotent).
+  alreadySent('already_sent'),
+
+  /// Nothing was sent for a recoverable reason (see [ChargeNowResult.reason]:
+  /// `no_email` | `lock_lost` | `no_saved_payment_method`).
+  notSent('not_sent'),
+
+  /// The charge attempt failed (see [ChargeNowResult.reason]: `card_expired`
+  /// | `payment_method_missing` | `customer_missing` | a raw gateway code).
+  failed('failed'),
+
+  /// A value the gateway introduced after this SDK build. Inspect
+  /// [ChargeNowResult.raw]; never thrown on, for forward compatibility.
+  unknown('unknown');
+
+  const ChargeNowOutcome(this.wireValue);
+  final String wireValue;
+
+  static ChargeNowOutcome fromWire(String? v) {
+    if (v == null) return ChargeNowOutcome.unknown;
+    for (final o in ChargeNowOutcome.values) {
+      if (o.wireValue == v) return o;
+    }
+    return ChargeNowOutcome.unknown;
+  }
+}
+
+/// Result of [ScheduledCharges.chargeNow].
+class ChargeNowResult {
+  ChargeNowResult({
+    required this.outcome,
+    required this.message,
+    this.cycleNumber,
+    this.reason,
+    this.raw = const {},
+  });
+
+  /// What happened — branch on this.
+  final ChargeNowOutcome outcome;
+
+  /// Human-readable summary, always present.
+  final String message;
+
+  /// The cycle that was acted on, or `null` when no cycle was selected.
+  final int? cycleNumber;
+
+  /// Machine-readable detail for [ChargeNowOutcome.notSent] /
+  /// [ChargeNowOutcome.failed]; `null` otherwise.
+  final String? reason;
+
+  final Map<String, dynamic> raw;
+
+  factory ChargeNowResult.fromJson(Map<String, dynamic> json) => ChargeNowResult(
+        outcome: ChargeNowOutcome.fromWire(json['outcome'] as String?),
+        message: (json['message'] as String?) ?? '',
+        cycleNumber: (json['cycleNumber'] as num?)?.toInt(),
+        reason: json['reason'] as String?,
         raw: json,
       );
 }

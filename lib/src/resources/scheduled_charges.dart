@@ -15,8 +15,13 @@ class CreateScheduledChargeParams {
     this.description,
     this.recurrence,
     this.trialDays,
+    this.maxRecoveryDays,
     this.idempotencyKey,
-  });
+  })  : assert(
+          maxRecoveryDays == null ||
+              (maxRecoveryDays >= 1 && maxRecoveryDays <= 365),
+          'maxRecoveryDays must be between 1 and 365',
+        );
 
   final int customerId;
   final num amount;
@@ -36,6 +41,10 @@ class CreateScheduledChargeParams {
   /// `{'interval': 'monthly'}`.
   final Map<String, dynamic>? recurrence;
   final int? trialDays;
+
+  /// Days the gateway keeps recovering a missed cycle before giving up
+  /// (1–365). Omit to use the system default (14).
+  final int? maxRecoveryDays;
   final String? idempotencyKey;
 
   Map<String, dynamic> toJson() => {
@@ -48,6 +57,7 @@ class CreateScheduledChargeParams {
         if (description != null) 'description': description,
         if (recurrence != null) 'recurrence': recurrence,
         if (trialDays != null) 'trialDays': trialDays,
+        if (maxRecoveryDays != null) 'maxRecoveryDays': maxRecoveryDays,
       };
 }
 
@@ -111,13 +121,13 @@ class ScheduledCharges {
   /// Detail bundle: charge + event timeline + linked transactions. Returns
   /// the raw map for now; typed models for events/transactions land in v1.
   Future<Map<String, dynamic>> get(String id) {
-    return _http.request('GET', '/api/scheduled-charges/$id');
+    return _http.request('GET', '/api/scheduled-charges/${Uri.encodeComponent(id)}');
   }
 
   Future<ScheduledChargeRecord> markPaid(String id, {int? cycleNumber, String? note}) async {
     final json = await _http.request(
       'POST',
-      '/api/scheduled-charges/$id/mark-paid',
+      '/api/scheduled-charges/${Uri.encodeComponent(id)}/mark-paid',
       body: {
         if (cycleNumber != null) 'cycleNumber': cycleNumber,
         if (note != null) 'note': note,
@@ -129,7 +139,7 @@ class ScheduledCharges {
   Future<ScheduledChargeRecord> postpone(String id, String newDueDate) async {
     final json = await _http.request(
       'POST',
-      '/api/scheduled-charges/$id/postpone',
+      '/api/scheduled-charges/${Uri.encodeComponent(id)}/postpone',
       body: {'dueDate': newDueDate},
     );
     return ScheduledChargeRecord.fromJson(json);
@@ -138,15 +148,45 @@ class ScheduledCharges {
   Future<ScheduledChargeRecord> pause(String id, {String? reason}) async {
     final json = await _http.request(
       'POST',
-      '/api/scheduled-charges/$id/pause',
+      '/api/scheduled-charges/${Uri.encodeComponent(id)}/pause',
       body: {if (reason != null) 'reason': reason},
     );
     return ScheduledChargeRecord.fromJson(json);
   }
 
   Future<ScheduledChargeRecord> resume(String id) async {
-    final json = await _http.request('POST', '/api/scheduled-charges/$id/resume');
+    final json = await _http.request('POST', '/api/scheduled-charges/${Uri.encodeComponent(id)}/resume');
     return ScheduledChargeRecord.fromJson(json);
+  }
+
+  /// Dispatch the charge + customer notification immediately, instead of
+  /// waiting for the due date — the same path the daily billing cron runs.
+  ///
+  /// Idempotent: a cycle that already went out reports
+  /// [ChargeNowOutcome.alreadySent] and is **not** re-charged, so this is
+  /// safe to retry. The charge must be in a billable status
+  /// (`scheduled` / `due_today`); a recurring series must have an open
+  /// cycle. Otherwise the gateway raises a 400 [GaruApiError] (404 if the
+  /// charge isn't yours).
+  ///
+  /// ```dart
+  /// final result = await garu.scheduledCharges.chargeNow('scc_01HG...');
+  /// switch (result.outcome) {
+  ///   case ChargeNowOutcome.dispatched:
+  ///     print('Charging cycle ${result.cycleNumber} now');
+  ///   case ChargeNowOutcome.alreadySent:
+  ///     print('Already sent — no double charge');
+  ///   case ChargeNowOutcome.notSent:
+  ///     print('Skipped: ${result.reason}'); // no_email | lock_lost | ...
+  ///   case ChargeNowOutcome.failed:
+  ///     print('Failed: ${result.reason}');  // card_expired | ...
+  ///   case ChargeNowOutcome.unknown:
+  ///     print(result.message);
+  /// }
+  /// ```
+  Future<ChargeNowResult> chargeNow(String id) async {
+    final json = await _http.request('POST', '/api/scheduled-charges/${Uri.encodeComponent(id)}/charge-now');
+    return ChargeNowResult.fromJson(json);
   }
 
   /// Hard-stop future cycles (recurring only). The in-flight cycle can
@@ -155,7 +195,7 @@ class ScheduledCharges {
   Future<ScheduledChargeRecord> cancelRecurrence(String id, {String? reason}) async {
     final json = await _http.request(
       'POST',
-      '/api/scheduled-charges/$id/cancel-recurrence',
+      '/api/scheduled-charges/${Uri.encodeComponent(id)}/cancel-recurrence',
       body: {if (reason != null) 'reason': reason},
     );
     return ScheduledChargeRecord.fromJson(json);
@@ -165,7 +205,7 @@ class ScheduledCharges {
   Future<ScheduledChargeRecord> cancelAtPeriodEnd(String id, {required bool enabled}) async {
     final json = await _http.request(
       'POST',
-      '/api/scheduled-charges/$id/cancel-at-period-end',
+      '/api/scheduled-charges/${Uri.encodeComponent(id)}/cancel-at-period-end',
       body: {'enabled': enabled},
     );
     return ScheduledChargeRecord.fromJson(json);
@@ -176,7 +216,7 @@ class ScheduledCharges {
   Future<ScheduledChargeRecord> changePaymentMethod(String id, int paymentMethodId) async {
     final json = await _http.request(
       'POST',
-      '/api/scheduled-charges/$id/payment-method',
+      '/api/scheduled-charges/${Uri.encodeComponent(id)}/payment-method',
       body: {'paymentMethodId': paymentMethodId},
     );
     return ScheduledChargeRecord.fromJson(json);
@@ -185,7 +225,7 @@ class ScheduledCharges {
   /// Clear the saved card. Future cycles fall back to the email-with-link
   /// flow so the customer can re-enter card details or pay via PIX/Boleto.
   Future<ScheduledChargeRecord> clearPaymentMethod(String id) async {
-    final json = await _http.request('DELETE', '/api/scheduled-charges/$id/payment-method');
+    final json = await _http.request('DELETE', '/api/scheduled-charges/${Uri.encodeComponent(id)}/payment-method');
     return ScheduledChargeRecord.fromJson(json);
   }
 
@@ -204,7 +244,7 @@ class ScheduledCharges {
     };
     final json = await _http.request(
       'GET',
-      '/api/scheduled-charges/$id/attempts',
+      '/api/scheduled-charges/${Uri.encodeComponent(id)}/attempts',
       query: query,
     );
     return PaginatedList.fromJson(json, ScheduledChargeAttempt.fromJson);

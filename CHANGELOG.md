@@ -1,3 +1,20 @@
+## 0.4.0
+
+Adds immediate dispatch for scheduled charges and per-series recovery windows. Both changes are additive — no breaking changes.
+
+**Added:**
+- `scheduledCharges.chargeNow(String id)` — dispatch a cycle's charge + customer notification immediately instead of waiting for the due date (the same path the daily billing cron runs). Idempotent: an already-dispatched cycle reports `alreadySent` and is never re-charged, so the call is safe to retry. Returns a typed `ChargeNowResult` { `outcome`, `cycleNumber`, `reason`, `message` }.
+- `ChargeNowOutcome` enum — `dispatched` / `alreadySent` / `notSent` / `failed`, plus a forward-compatible `unknown` sentinel. `notSent`/`failed` carry a `reason` (`no_email`, `lock_lost`, `no_saved_payment_method`; `card_expired`, `payment_method_missing`, `customer_missing`, or a raw gateway code).
+- `CreateScheduledChargeParams.maxRecoveryDays` (int?, 1–365) — how long the gateway keeps recovering a missed cycle before giving up. Omit for the system default (14). The 1–365 range is checked by a debug-mode `assert` (compiled out of release/AOT builds); the gateway is the authoritative boundary and rejects out-of-range values with a 400.
+- `ScheduledChargeRecord.maxRecoveryDays` (int?) on the returned object, with `fromJson`/`toJson` support.
+
+**Security:**
+- Every `scheduledCharges` per-id endpoint now interpolates the id through `Uri.encodeComponent(id)`, extending the v0.3.0 path-injection hardening (previously applied only to `products.portalConfig`) to the whole resource. An id containing `/`, `?`, or `#` can no longer spawn extra path segments or leak a query/fragment into the constructed URL.
+
+**Validated:**
+- `dart analyze` clean.
+- 38 unit tests passing (16 new) across `models_test.dart` and a new `scheduled_charges_test.dart` — covers `chargeNow` HTTP wiring (POST, `/charge-now` path, empty body) against a `MockClient`, id URL-encoding, all four outcomes + the `unknown` fallback, the `maxRecoveryDays` range assertion, and `ScheduledChargeRecord` round-tripping.
+
 ## 0.3.0
 
 Tracks Garu backend v0.10.0. Per-product portal-config endpoints now accept the product UUID in addition to the legacy numeric id.

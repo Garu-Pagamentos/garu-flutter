@@ -151,6 +151,137 @@ void main() {
     });
   });
 
+  group('ChargeNowResult.fromJson', () {
+    test('parses a dispatched outcome with a cycle number', () {
+      final r = ChargeNowResult.fromJson({
+        'outcome': 'dispatched',
+        'cycleNumber': 3,
+        'message': 'Charge dispatched for cycle 3.',
+      });
+      expect(r.outcome, ChargeNowOutcome.dispatched);
+      expect(r.cycleNumber, 3);
+      expect(r.reason, isNull);
+      expect(r.message, 'Charge dispatched for cycle 3.');
+    });
+
+    test('parses an already_sent outcome (idempotent replay)', () {
+      final r = ChargeNowResult.fromJson({
+        'outcome': 'already_sent',
+        'cycleNumber': 1,
+        'message': 'Cycle 1 was already sent.',
+      });
+      expect(r.outcome, ChargeNowOutcome.alreadySent);
+      expect(r.cycleNumber, 1);
+    });
+
+    test('parses a not_sent outcome carrying a reason and null cycle', () {
+      final r = ChargeNowResult.fromJson({
+        'outcome': 'not_sent',
+        'cycleNumber': null,
+        'reason': 'no_email',
+        'message': 'Customer has no email on file.',
+      });
+      expect(r.outcome, ChargeNowOutcome.notSent);
+      expect(r.cycleNumber, isNull);
+      expect(r.reason, 'no_email');
+    });
+
+    test('parses a failed outcome with a gateway reason', () {
+      final r = ChargeNowResult.fromJson({
+        'outcome': 'failed',
+        'cycleNumber': 2,
+        'reason': 'card_expired',
+        'message': 'The saved card has expired.',
+      });
+      expect(r.outcome, ChargeNowOutcome.failed);
+      expect(r.reason, 'card_expired');
+    });
+
+    test('forward-compatible outcome values fall back to unknown', () {
+      final r = ChargeNowResult.fromJson({
+        'outcome': 'queued_for_later',
+        'message': 'Something new.',
+      });
+      expect(r.outcome, ChargeNowOutcome.unknown);
+      expect(ChargeNowOutcome.fromWire(null), ChargeNowOutcome.unknown);
+    });
+  });
+
+  group('CreateScheduledChargeParams.maxRecoveryDays', () {
+    test('toJson includes maxRecoveryDays when set', () {
+      const params = CreateScheduledChargeParams(
+        customerId: 99,
+        amount: 49.9,
+        type: 'recurring',
+        dueDate: '2026-06-01',
+        methods: ['card'],
+        recurrence: {'interval': 'monthly'},
+        maxRecoveryDays: 30,
+      );
+      expect(params.toJson()['maxRecoveryDays'], 30);
+    });
+
+    test('toJson omits maxRecoveryDays when unset (system default)', () {
+      const params = CreateScheduledChargeParams(
+        customerId: 99,
+        amount: 49.9,
+        type: 'one_time',
+        dueDate: '2026-06-01',
+        methods: ['pix'],
+      );
+      expect(params.toJson().containsKey('maxRecoveryDays'), isFalse);
+    });
+
+    test('asserts the 1–365 range', () {
+      expect(
+        () => CreateScheduledChargeParams(
+          customerId: 1,
+          amount: 10,
+          type: 'one_time',
+          dueDate: '2026-06-01',
+          methods: const ['pix'],
+          maxRecoveryDays: 0,
+        ),
+        throwsA(isA<AssertionError>()),
+      );
+      expect(
+        () => CreateScheduledChargeParams(
+          customerId: 1,
+          amount: 10,
+          type: 'one_time',
+          dueDate: '2026-06-01',
+          methods: const ['pix'],
+          maxRecoveryDays: 366,
+        ),
+        throwsA(isA<AssertionError>()),
+      );
+    });
+  });
+
+  group('ScheduledChargeRecord maxRecoveryDays round-trip', () {
+    test('fromJson reads maxRecoveryDays; null when absent', () {
+      final withField = ScheduledChargeRecord.fromJson({
+        'id': 'scc_1',
+        'sellerId': 7,
+        'customerId': 99,
+        'amount': 49.9,
+        'type': 'recurring',
+        'status': 'scheduled',
+        'dueDate': '2026-06-01',
+        'maxRecoveryDays': 30,
+      });
+      expect(withField.maxRecoveryDays, 30);
+      expect(withField.toJson()['maxRecoveryDays'], 30);
+
+      final without = ScheduledChargeRecord.fromJson({
+        'id': 'scc_2',
+        'dueDate': '2026-06-01',
+      });
+      expect(without.maxRecoveryDays, isNull);
+      expect(without.toJson().containsKey('maxRecoveryDays'), isFalse);
+    });
+  });
+
   group('Uri.encodeComponent guard — productId path injection', () {
     test('encodes ?, #, / so they cannot corrupt the URL path', () {
       expect(Uri.encodeComponent('57?admin=true'), '57%3Fadmin%3Dtrue');
