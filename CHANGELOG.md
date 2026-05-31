@@ -1,3 +1,16 @@
+## 0.6.0
+
+Makes the **products** resource read-write. Tracks `@garuhq/node@0.15.0`. Additive — existing read-only callers (`list` / `get` / `portalConfig`) are unchanged.
+
+**Added:**
+- `products.create(CreateProductParams)` — `POST /api/products` (gateway returns 201), parses back a typed `Product`. `name` is required; `value` (centavos), `description`, `image`, `tags`, `pix`, `boleto`, `creditCard`, `pixAutomatic`, `installments`, `isSubscription`, `subscriptionType`, `unitLabel`, `returnUrl`, `returnUrlButtonText`, `statementDescriptor` are optional. Null fields are omitted from the wire body. Auto-attaches `X-Idempotency-Key` (UUIDv4) unless `CreateProductParams.idempotencyKey` is supplied — sent as a header, never in the body — so the runner's transient-failure retries can't double-create a product (matches `scheduledCharges.create`).
+- `products.update(Object id, UpdateProductParams)` — `PATCH /api/products/{id}`. `id` accepts the numeric id (`int`) or the product UUID (`String`) — mirroring `@garuhq/node`'s `string | number` signature — interpolated through `Uri.encodeComponent` for the same path-injection hardening the rest of the SDK uses. All `UpdateProductParams` fields are optional and only the ones you set are sent, so updates stay partial.
+- `CreateProductParams` / `UpdateProductParams` exported from `package:garu/garu.dart`. Field names are camelCase on the wire, verified against `@garuhq/node@0.15.0`'s `CreateProductParams` / `UpdateProductParams`.
+
+**Validated:**
+- `dart analyze` clean.
+- 56 unit tests passing (8 new) in a new `products_test.dart` — covers the `create` POST + 201 parse, the auto-generated and caller-supplied `X-Idempotency-Key` (key omitted from the body), null-field omission, `update` PATCH with numeric and UUID ids, partial-body merge semantics, and id URL-encoding against a `MockClient`.
+
 ## 0.5.0
 
 Surfaces **Pix Automático** — Brazil's BACEN auto-debit recurring Pix — across the SDK. Tracks Garu backend v0.13.0 + v0.14.0. Every change is additive: existing Card/Pix/Boleto callers need no changes.

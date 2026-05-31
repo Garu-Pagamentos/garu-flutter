@@ -1,6 +1,6 @@
 name: garu
 description: Dart/Flutter SDK for the Garu payment gateway — PIX, credit card, boleto, recurring charges, webhooks.
-version: 0.5.0
+version: 0.6.0
 homepage: https://garu.com.br
 repository: https://github.com/Garu-Pagamentos/garu-flutter
 issue_tracker: https://github.com/Garu-Pagamentos/garu-flutter/issues

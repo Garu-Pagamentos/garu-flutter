@@ -36,7 +36,8 @@ export 'src/models/scheduled_charge.dart'
 export 'src/resources/charges.dart' show Charges, CardInput, CustomerInput, RefundParams;
 export 'src/resources/customers.dart' show Customers, CustomerParams;
 export 'src/resources/meta.dart' show Meta;
-export 'src/resources/products.dart' show Products, ProductPortalConfigResource;
+export 'src/resources/products.dart'
+    show Products, ProductPortalConfigResource, CreateProductParams, UpdateProductParams;
 export 'src/resources/scheduled_charges.dart'
     show CreateScheduledChargeParams, ScheduledCharges;
 export 'src/webhooks.dart' show GaruWebhooks, VerifiedWebhook, VerifyWebhookParams;
