@@ -102,6 +102,89 @@ void main() {
     });
   });
 
+  group('scheduledCharges.create — pix_automatic', () {
+    test('sends a recurring pix_automatic series and parses it back', () async {
+      late http.Request captured;
+      final client = MockClient((req) async {
+        captured = req;
+        return http.Response(
+          jsonEncode({
+            'id': 'scc_pa',
+            'sellerId': 7,
+            'customerId': 123,
+            'productId': 456,
+            'amount': 297.5,
+            'type': 'recurring',
+            'status': 'scheduled',
+            'dueDate': '2026-06-15',
+            'methods': ['pix_automatic'],
+          }),
+          200,
+        );
+      });
+      final garu = Garu(apiKey: 'sk_test_x', httpClient: client);
+
+      final record = await garu.scheduledCharges.create(
+        const CreateScheduledChargeParams(
+          customerId: 123,
+          productId: 456,
+          amount: 297.5,
+          type: 'recurring',
+          dueDate: '2026-06-15',
+          methods: ['pix_automatic'],
+          recurrence: {'interval': 'monthly'},
+        ),
+      );
+
+      final body = jsonDecode(captured.body) as Map<String, dynamic>;
+      expect(body['methods'], ['pix_automatic']);
+      expect(body['productId'], 456);
+      expect(record.methods, contains('pix_automatic'));
+
+      garu.close();
+    });
+
+    test('asserts pix_automatic requires type recurring', () {
+      final garu = Garu(apiKey: 'sk_test_x', httpClient: MockClient((_) async {
+        return http.Response('{}', 200);
+      }));
+      expect(
+        garu.scheduledCharges.create(
+          const CreateScheduledChargeParams(
+            customerId: 1,
+            productId: 456,
+            amount: 10,
+            type: 'one_time',
+            dueDate: '2026-06-15',
+            methods: ['pix_automatic'],
+          ),
+        ),
+        throwsA(isA<AssertionError>()),
+      );
+      garu.close();
+    });
+
+    test('asserts pix_automatic requires a productId', () {
+      final garu = Garu(apiKey: 'sk_test_x', httpClient: MockClient((_) async {
+        return http.Response('{}', 200);
+      }));
+      expect(
+        garu.scheduledCharges.create(
+          const CreateScheduledChargeParams(
+            customerId: 1,
+            amount: 10,
+            type: 'recurring',
+            dueDate: '2026-06-15',
+            methods: ['pix_automatic'],
+            recurrence: {'interval': 'monthly'},
+          ),
+        ),
+        throwsA(isA<AssertionError>()),
+      );
+      garu.close();
+    });
+  });
+
   group('scheduledCharges.create — maxRecoveryDays', () {
     test('sends maxRecoveryDays in the request body when provided', () async {
       late http.Request captured;

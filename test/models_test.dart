@@ -282,6 +282,85 @@ void main() {
     });
   });
 
+  group('PaymentMethod (Pix Automático)', () {
+    test('parses all known wire values', () {
+      expect(PaymentMethod.fromWire('pix'), PaymentMethod.pix);
+      expect(PaymentMethod.fromWire('boleto'), PaymentMethod.boleto);
+      expect(PaymentMethod.fromWire('card'), PaymentMethod.card);
+      expect(PaymentMethod.fromWire('pix_automatic'), PaymentMethod.pixAutomatic);
+    });
+
+    test('pixAutomatic carries the pix_automatic wire value', () {
+      expect(PaymentMethod.pixAutomatic.wireValue, 'pix_automatic');
+    });
+
+    test('falls back to unknown for unrecognized / null values', () {
+      expect(PaymentMethod.fromWire('crypto'), PaymentMethod.unknown);
+      expect(PaymentMethod.fromWire(null), PaymentMethod.unknown);
+    });
+  });
+
+  group('Charge.method (webhook paymentMethod branching)', () {
+    test('a pix_automatic transaction resolves to PaymentMethod.pixAutomatic', () {
+      final c = Charge.fromJson({
+        'id': 27,
+        'value': 14.9,
+        'paymentMethod': 'pix_automatic',
+        'status': 'paid',
+        'date': '2026-05-31T10:00:00Z',
+      });
+      expect(c.paymentMethod, 'pix_automatic');
+      expect(c.method, PaymentMethod.pixAutomatic);
+    });
+
+    test('an unknown future method keeps the raw string and resolves to unknown', () {
+      final c = Charge.fromJson({
+        'id': 28,
+        'value': 1,
+        'paymentMethod': 'wire_transfer_v2',
+        'status': 'paid',
+        'date': '2026-05-31T10:00:00Z',
+      });
+      expect(c.paymentMethod, 'wire_transfer_v2');
+      expect(c.method, PaymentMethod.unknown);
+    });
+  });
+
+  group('Product.pixAutomatic', () {
+    test('reads pixAutomatic: true', () {
+      final p = Product.fromJson({
+        'id': 456,
+        'uuid': 'b3f2c1e8-6e4a-4b9f-9d1c-2a1f6c3d4e5f',
+        'name': 'Plano Mensal',
+        'pixAutomatic': true,
+      });
+      expect(p.pixAutomatic, isTrue);
+    });
+
+    test('defaults to false when the field is absent', () {
+      final p = Product.fromJson({'id': 1, 'uuid': 'u', 'name': 'X'});
+      expect(p.pixAutomatic, isFalse);
+    });
+  });
+
+  group('CreateScheduledChargeParams pix_automatic', () {
+    test('serializes a recurring pix_automatic series with productId', () {
+      const params = CreateScheduledChargeParams(
+        customerId: 123,
+        productId: 456,
+        amount: 297.5,
+        type: 'recurring',
+        dueDate: '2026-06-15',
+        methods: ['pix_automatic'],
+        recurrence: {'interval': 'monthly'},
+      );
+      final json = params.toJson();
+      expect(json['methods'], ['pix_automatic']);
+      expect(json['productId'], 456);
+      expect(json['type'], 'recurring');
+    });
+  });
+
   group('Uri.encodeComponent guard — productId path injection', () {
     test('encodes ?, #, / so they cannot corrupt the URL path', () {
       expect(Uri.encodeComponent('57?admin=true'), '57%3Fadmin%3Dtrue');

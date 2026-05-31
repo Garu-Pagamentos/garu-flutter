@@ -1,15 +1,15 @@
 # Garu — Dart / Flutter SDK
 
-Brazilian payment gateway. Charges (PIX / boleto / credit card), customers, products + portal customization, scheduled charges (one-time and recurring), webhook signature verification.
+Brazilian payment gateway. Charges (PIX / boleto / credit card / **Pix Automático**), customers, products + portal customization, scheduled charges (one-time and recurring), webhook signature verification.
 
-> **Status: `0.2.0`.** Feature-complete with [`@garuhq/node@0.8.0`](https://www.npmjs.com/package/@garuhq/node) for the v0.8.0 backend surface. Public API still **not frozen** until v1.0.0 — minor breakages possible. Validated with `dart analyze` and 22 passing unit tests on Dart 3.11.5.
+> **Status: `0.5.0`.** Tracks the Garu v0.14.0 backend surface, including Pix Automático (BACEN auto-debit recurring Pix). Public API still **not frozen** until v1.0.0 — minor breakages possible. Validated with `dart analyze` and 49 passing unit tests.
 
 ## Install
 
 ```yaml
 # pubspec.yaml
 dependencies:
-  garu: 0.2.0
+  garu: 0.5.0
 ```
 
 ## Quickstart
@@ -174,6 +174,51 @@ final declines = attempts.data
 final permanentFailures = declines.where((a) => a.failureCode?.isPermanent == true);
 ```
 
+## Pix Automático (recurring auto-debit Pix)
+
+[Pix Automático](https://garu.com.br/changelog/v0.14.0-pix-automatico-assinaturas) is BACEN's auto-debit recurring Pix: the customer authorizes **once** (a consent link / QR in their bank app, under "Pix Automático" / "Recorrência Pix"), and subsequent cycles debit silently — no card on file.
+
+Enable it on the product, then add `'pix_automatic'` to a **recurring** scheduled charge that carries a `productId`:
+
+```dart
+// The product must have pixAutomatic enabled (Product.pixAutomatic == true).
+final series = await garu.scheduledCharges.create(const CreateScheduledChargeParams(
+  customerId: 123,
+  productId: 456,           // required for pix_automatic
+  amount: 297.5,
+  type: 'recurring',        // required for pix_automatic
+  dueDate: '2026-06-15',
+  methods: [PaymentMethod.pixAutomatic.wireValue], // 'pix_automatic'
+  recurrence: {'interval': 'monthly'},
+  maxRecoveryDays: 14,
+));
+```
+
+`methods` containing `'pix_automatic'` without `type: 'recurring'` + a `productId` trips a debug-mode assertion locally and is rejected by the gateway (`400` / `404` / `409`).
+
+### Webhooks — no new event names
+
+Pix Automático fires the **same** events as card-backed subscriptions (`subscription.*`, `transaction.payment.*`). Branch on the payment method to tell them apart:
+
+```dart
+final data = verified.event['data'];
+if (data is Map<String, dynamic>) {
+  final charge = Charge.fromJson(data);
+  switch (charge.method) {
+    case PaymentMethod.pixAutomatic:
+      // auto-debit Pix cycle
+      break;
+    case PaymentMethod.card:
+      // card cycle
+      break;
+    default:
+      break;
+  }
+}
+```
+
+> Pix Automático does **not** retry a refused debit at the network level — Garu fires `subscription.payment_failed`, flips the subscription to `past_due`, and the existing dunning state machine takes over. Cancel via the same routes as any other subscription (`scheduledCharges.cancelRecurrence` / `cancelAtPeriodEnd`); the customer can also revoke authorization in their bank app, which Garu surfaces as `subscription.cancelled`.
+
 ## Failure codes
 
 ```dart
@@ -190,7 +235,7 @@ void handleCycleFailed(GaruFailureCode? code) {
 
 Every `transaction.payment.failed`, `scheduled_charge.cycle_failed`, and `listAttempts` row carries `failureCode` (canonical enum, gateway-independent), `failureReason` (PT-BR human-readable), and `gatewayFailureCode` (raw ABECS for forensics). Full table at [docs.garu.com.br/api-reference/webhooks/codigos-de-falha](https://docs.garu.com.br/api-reference/webhooks/codigos-de-falha).
 
-## What's NOT in v0.2.0
+## What's NOT in v0.5.0
 
 These remain TODO before v1.0.0:
 

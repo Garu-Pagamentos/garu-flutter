@@ -1,6 +1,7 @@
 import '../http.dart';
 import '../idempotency.dart';
 import '../models/paginated.dart';
+import '../models/payment_method.dart';
 import '../models/scheduled_charge.dart';
 
 /// Inputs for `scheduledCharges.create`.
@@ -32,7 +33,14 @@ class CreateScheduledChargeParams {
   /// `YYYY-MM-DD` (São Paulo time).
   final String dueDate;
 
-  /// One or more of `'pix'`, `'boleto'`, `'card'`. `'card'` requires `productId`.
+  /// One or more of `'pix'`, `'boleto'`, `'card'`, `'pix_automatic'` — see
+  /// [PaymentMethod] for typed wire values (`PaymentMethod.card.wireValue`).
+  ///
+  /// `'card'` requires `productId`. `'pix_automatic'` (Pix Automático,
+  /// BACEN auto-debit recurring Pix) additionally requires
+  /// `type == 'recurring'` and a `productId` whose product has
+  /// `pixAutomatic` enabled — both checked by a debug-mode `assert` here and
+  /// authoritatively by the gateway (400 / 404 / 409 otherwise).
   final List<String> methods;
   final int? productId;
   final String? description;
@@ -72,6 +80,14 @@ class ScheduledCharges {
   /// Create a one-time or recurring scheduled charge. Auto-attaches
   /// `X-Idempotency-Key` (UUIDv4) unless provided.
   Future<ScheduledChargeRecord> create(CreateScheduledChargeParams params) async {
+    // Pix Automático (BACEN auto-debit recurring Pix) only makes sense on a
+    // recurring series tied to a product. Checked in debug builds; the gateway
+    // is authoritative and rejects violations with 400 / 404 / 409.
+    assert(
+      !params.methods.contains(PaymentMethod.pixAutomatic.wireValue) ||
+          (params.type == 'recurring' && params.productId != null),
+      "methods containing 'pix_automatic' requires type: 'recurring' and a productId",
+    );
     final json = await _http.request(
       'POST',
       '/api/scheduled-charges',

@@ -7,6 +7,7 @@ class Product {
     required this.name,
     this.value,
     this.sellerId,
+    this.pixAutomatic = false,
     this.raw = const {},
   });
 
@@ -16,6 +17,10 @@ class Product {
   final num? value;
   final int? sellerId;
 
+  /// Whether the public checkout exposes Pix Automático (BACEN auto-debit
+  /// recurring Pix) as a payment tab for this product. Defaults to `false`.
+  final bool pixAutomatic;
+
   final Map<String, dynamic> raw;
 
   factory Product.fromJson(Map<String, dynamic> json) => Product(
@@ -24,6 +29,7 @@ class Product {
         name: (json['name'] as String?) ?? '',
         value: json['value'] as num?,
         sellerId: (json['sellerId'] as num?)?.toInt(),
+        pixAutomatic: (json['pixAutomatic'] as bool?) ?? false,
         raw: json,
       );
 }

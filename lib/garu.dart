@@ -23,6 +23,7 @@ export 'src/failure_codes.dart' show GaruFailureCode;
 export 'src/models/charge.dart' show Charge;
 export 'src/models/customer.dart' show Customer;
 export 'src/models/paginated.dart' show PaginatedList, PaginationMeta;
+export 'src/models/payment_method.dart' show PaymentMethod;
 export 'src/models/product.dart' show Product, ProductPortalConfig, SetProductPortalConfigParams;
 export 'src/models/scheduled_charge.dart'
     show

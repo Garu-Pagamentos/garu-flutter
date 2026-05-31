@@ -1,4 +1,5 @@
 import '../failure_codes.dart';
+import 'payment_method.dart';
 
 /// A Garu transaction (charge) record. Returned by `charges.create`,
 /// `charges.get`, and the items of `charges.list`.
@@ -21,7 +22,17 @@ class Charge {
 
   final int id;
   final num value;
+
+  /// Raw payment-method string as sent by the API (e.g. `'pix'`, `'card'`,
+  /// `'pix_automatic'`). Use [method] for a typed, forward-compatible view.
   final String paymentMethod;
+
+  /// Typed view over [paymentMethod]. Resolves `'pix_automatic'` to
+  /// [PaymentMethod.pixAutomatic]; unrecognized future values resolve to
+  /// [PaymentMethod.unknown]. Branch on this on `transaction.*` webhooks to
+  /// tell a Pix Automático debit apart from a card charge.
+  PaymentMethod get method => PaymentMethod.fromWire(paymentMethod);
+
   final String status;
   final DateTime date;
 

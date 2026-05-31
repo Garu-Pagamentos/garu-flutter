@@ -1,3 +1,25 @@
+## 0.5.0
+
+Surfaces **Pix Automático** — Brazil's BACEN auto-debit recurring Pix — across the SDK. Tracks Garu backend v0.13.0 + v0.14.0. Every change is additive: existing Card/Pix/Boleto callers need no changes.
+
+Pix Automático lets a customer authorize a recurring debit **once** (a consent link / QR in their bank app); subsequent cycles debit silently with no card on file.
+
+**Added:**
+- `PaymentMethod` enum (`pix` / `boleto` / `card` / `pixAutomatic`, plus a forward-compatible `unknown` sentinel). Each value exposes its API `wireValue` (`PaymentMethod.pixAutomatic.wireValue == 'pix_automatic'`) and a `fromWire` parser that resolves unrecognized future values to `unknown` instead of throwing. Exported from `package:garu/garu.dart`.
+- `Charge.method` — a typed, forward-compatible `PaymentMethod` view over the raw `Charge.paymentMethod` string. Branch on this on `transaction.*` webhooks to tell a Pix Automático debit apart from a card charge (no new event names — Pix Automático fires the same `subscription.*` / `transaction.payment.*` events as card).
+- `Product.pixAutomatic` (non-nullable `bool`, defaults `false`) — whether the public checkout exposes Pix Automático for the product. Read from `Product.fromJson`.
+- `scheduledCharges.create` now accepts `'pix_automatic'` in `methods`. A debug-mode `assert` in `create()` enforces the gateway's constraint — `'pix_automatic'` requires `type: 'recurring'` **and** a `productId` — and is compiled out of release/AOT builds; the gateway is authoritative and rejects violations with `400` / `404` / `409`.
+
+**Docs:**
+- README gains a "Pix Automático" recipe (create a recurring auto-debit series, branch webhooks on `Charge.method`, failure/cancellation model) and refreshed version/status to `0.5.0`.
+
+**Build:**
+- Pinned exact dependency versions in `pubspec.yaml` (`http 1.2.2`, `crypto 3.0.5`, `uuid 4.5.1`, `test 1.25.8`, `lints 4.0.0`) — no more caret ranges.
+
+**Validated:**
+- `dart analyze` clean.
+- 49 unit tests passing (11 new) — covers `PaymentMethod.fromWire` (known values, `pix_automatic` wire value, `unknown` fallback), `Charge.method` resolution, `Product.pixAutomatic` parse + default, the recurring `pix_automatic` create round-trip, and the `type`/`productId` assertions in `create()`.
+
 ## 0.4.0
 
 Adds immediate dispatch for scheduled charges and per-series recovery windows. Both changes are additive — no breaking changes.
