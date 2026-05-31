@@ -14,7 +14,7 @@ Pix Automático lets a customer authorize a recurring debit **once** (a consent 
 - README gains a "Pix Automático" recipe (create a recurring auto-debit series, branch webhooks on `Charge.method`, failure/cancellation model) and refreshed version/status to `0.5.0`.
 
 **Build:**
-- Pinned exact dependency versions in `pubspec.yaml` (`http 1.2.2`, `crypto 3.0.5`, `uuid 4.5.1`, `test 1.25.8`, `lints 4.0.0`) — no more caret ranges.
+- Dependency constraints use caret ranges (`http ^1.2.2`, `crypto ^3.0.5`, `uuid ^4.5.1`, `test ^1.25.8`, `lints ^4.0.0`) — the pub.dev convention for libraries, so downstream consumers can resolve alongside other packages. Exact resolved versions are captured in `pubspec.lock`.
 
 **Validated:**
 - `dart analyze` clean.
