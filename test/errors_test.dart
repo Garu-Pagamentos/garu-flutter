@@ -28,7 +28,8 @@ void main() {
     });
 
     test('429 → GaruRateLimitError carries retryAfterSec', () {
-      final err = mapHttpError(status: 429, message: 'slow down', retryAfterSec: 30);
+      final err =
+          mapHttpError(status: 429, message: 'slow down', retryAfterSec: 30);
       expect(err, isA<GaruRateLimitError>());
       expect((err as GaruRateLimitError).retryAfterSec, 30);
     });

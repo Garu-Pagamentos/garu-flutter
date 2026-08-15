@@ -41,7 +41,8 @@ class Customers {
   final HttpRunner _http;
 
   Future<Customer> create(CustomerParams params) async {
-    final json = await _http.request('POST', '/api/customers', body: params.toJson());
+    final json =
+        await _http.request('POST', '/api/customers', body: params.toJson());
     return Customer.fromJson(json);
   }
 
@@ -65,7 +66,8 @@ class Customers {
   }
 
   Future<Customer> update(int id, CustomerParams params) async {
-    final json = await _http.request('PATCH', '/api/customers/$id', body: params.toJson());
+    final json = await _http.request('PATCH', '/api/customers/$id',
+        body: params.toJson());
     return Customer.fromJson(json);
   }
 

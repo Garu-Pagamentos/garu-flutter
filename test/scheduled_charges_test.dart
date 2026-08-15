@@ -40,7 +40,8 @@ void main() {
       garu.close();
     });
 
-    test('URL-encodes the id so it cannot inject path/query segments', () async {
+    test('URL-encodes the id so it cannot inject path/query segments',
+        () async {
       late http.Request captured;
       final client = MockClient((req) async {
         captured = req;
@@ -145,9 +146,11 @@ void main() {
     });
 
     test('asserts pix_automatic requires type recurring', () {
-      final garu = Garu(apiKey: 'sk_test_x', httpClient: MockClient((_) async {
-        return http.Response('{}', 200);
-      }));
+      final garu = Garu(
+          apiKey: 'sk_test_x',
+          httpClient: MockClient((_) async {
+            return http.Response('{}', 200);
+          }));
       expect(
         garu.scheduledCharges.create(
           const CreateScheduledChargeParams(
@@ -165,9 +168,11 @@ void main() {
     });
 
     test('asserts pix_automatic requires a productId', () {
-      final garu = Garu(apiKey: 'sk_test_x', httpClient: MockClient((_) async {
-        return http.Response('{}', 200);
-      }));
+      final garu = Garu(
+          apiKey: 'sk_test_x',
+          httpClient: MockClient((_) async {
+            return http.Response('{}', 200);
+          }));
       expect(
         garu.scheduledCharges.create(
           const CreateScheduledChargeParams(

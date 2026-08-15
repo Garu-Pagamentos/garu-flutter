@@ -99,7 +99,8 @@ void main() {
       final garu = Garu(apiKey: 'sk_test_x', httpClient: client);
 
       await garu.products.create(
-        const CreateProductParams(name: 'Curso', idempotencyKey: 'my-custom-key'),
+        const CreateProductParams(
+            name: 'Curso', idempotencyKey: 'my-custom-key'),
       );
 
       expect(captured.headers['x-idempotency-key'], 'my-custom-key');

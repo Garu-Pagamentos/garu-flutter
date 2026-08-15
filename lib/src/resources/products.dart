@@ -20,7 +20,8 @@ class ProductPortalConfigResource {
   /// per-product config exists (the product falls back to seller-level
   /// portal config).
   Future<ProductPortalConfig?> get(String productId) async {
-    final json = await _http.request('GET', '/api/products/${Uri.encodeComponent(productId)}/portal-config');
+    final json = await _http.request(
+        'GET', '/api/products/${Uri.encodeComponent(productId)}/portal-config');
     if (json.isEmpty || json['productId'] == null) return null;
     return ProductPortalConfig.fromJson(json);
   }
@@ -29,7 +30,8 @@ class ProductPortalConfigResource {
   /// have the same merge semantics — only fields present in the body
   /// are written, unspecified fields keep their persisted value. Use
   /// [clear] to reset everything.
-  Future<ProductPortalConfig> set(String productId, SetProductPortalConfigParams params) async {
+  Future<ProductPortalConfig> set(
+      String productId, SetProductPortalConfigParams params) async {
     final json = await _http.request(
       'POST',
       '/api/products/${Uri.encodeComponent(productId)}/portal-config',
@@ -39,7 +41,8 @@ class ProductPortalConfigResource {
   }
 
   /// Same merge semantics as [set] — alias for HTTP-PATCH-preferring callers.
-  Future<ProductPortalConfig> patch(String productId, SetProductPortalConfigParams params) async {
+  Future<ProductPortalConfig> patch(
+      String productId, SetProductPortalConfigParams params) async {
     final json = await _http.request(
       'PATCH',
       '/api/products/${Uri.encodeComponent(productId)}/portal-config',
@@ -51,7 +54,8 @@ class ProductPortalConfigResource {
   /// Remove the per-product config. The product falls back to the
   /// seller-level portal config.
   Future<Map<String, dynamic>> clear(String productId) {
-    return _http.request('DELETE', '/api/products/${Uri.encodeComponent(productId)}/portal-config');
+    return _http.request('DELETE',
+        '/api/products/${Uri.encodeComponent(productId)}/portal-config');
   }
 }
 
@@ -120,8 +124,10 @@ class CreateProductParams {
         if (subscriptionType != null) 'subscriptionType': subscriptionType,
         if (unitLabel != null) 'unitLabel': unitLabel,
         if (returnUrl != null) 'returnUrl': returnUrl,
-        if (returnUrlButtonText != null) 'returnUrlButtonText': returnUrlButtonText,
-        if (statementDescriptor != null) 'statementDescriptor': statementDescriptor,
+        if (returnUrlButtonText != null)
+          'returnUrlButtonText': returnUrlButtonText,
+        if (statementDescriptor != null)
+          'statementDescriptor': statementDescriptor,
       };
 }
 
@@ -183,8 +189,10 @@ class UpdateProductParams {
         if (subscriptionType != null) 'subscriptionType': subscriptionType,
         if (unitLabel != null) 'unitLabel': unitLabel,
         if (returnUrl != null) 'returnUrl': returnUrl,
-        if (returnUrlButtonText != null) 'returnUrlButtonText': returnUrlButtonText,
-        if (statementDescriptor != null) 'statementDescriptor': statementDescriptor,
+        if (returnUrlButtonText != null)
+          'returnUrlButtonText': returnUrlButtonText,
+        if (statementDescriptor != null)
+          'statementDescriptor': statementDescriptor,
       };
 }
 
@@ -236,7 +244,8 @@ class Products {
       if (search != null) 'search': search,
       if (tab != null) 'tab': tab,
     };
-    final json = await _http.request('GET', '/api/products/seller', query: query);
+    final json =
+        await _http.request('GET', '/api/products/seller', query: query);
     return PaginatedList.fromJson(json, Product.fromJson);
   }
 

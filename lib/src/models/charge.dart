@@ -59,8 +59,9 @@ class Charge {
         galaxPayId: (json['galaxPayId'] as num?)?.toInt(),
         productId: (json['productId'] as num?)?.toInt(),
         customerId: (json['customerId'] as num?)?.toInt(),
-        failureCode:
-            json['failureCode'] != null ? GaruFailureCode.fromWire(json['failureCode'] as String) : null,
+        failureCode: json['failureCode'] != null
+            ? GaruFailureCode.fromWire(json['failureCode'] as String)
+            : null,
         failureReason: json['failureReason'] as String?,
         gatewayFailureCode: json['gatewayFailureCode'] as String?,
         refundedAt: _parseDate(json['refundedAt']),

@@ -10,7 +10,8 @@ void main() {
 
   String sign(int timestamp, List<int> payload, String hmacSecret) {
     final signed = '$timestamp.${utf8.decode(payload)}';
-    final mac = Hmac(sha256, utf8.encode(hmacSecret)).convert(utf8.encode(signed));
+    final mac =
+        Hmac(sha256, utf8.encode(hmacSecret)).convert(utf8.encode(signed));
     return 't=$timestamp,v1=${mac.toString()}';
   }
 
@@ -32,7 +33,8 @@ void main() {
     test('throws on tampered payload', () {
       final ts = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
       final header = sign(ts, body, secret);
-      final tamperedBody = utf8.encode('{"event":"transaction.payment.succeeded","id":99}');
+      final tamperedBody =
+          utf8.encode('{"event":"transaction.payment.succeeded","id":99}');
 
       expect(
         () => const GaruWebhooks().verify(VerifyWebhookParams(
