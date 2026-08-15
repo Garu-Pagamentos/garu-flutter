@@ -16,7 +16,8 @@ class PaginatedList<T> {
     final rawData = (json['data'] as List<dynamic>?) ?? const <dynamic>[];
     return PaginatedList(
       data: rawData.map((e) => parseItem(e as Map<String, dynamic>)).toList(),
-      meta: PaginationMeta.fromJson((json['meta'] as Map<String, dynamic>?) ?? const {}),
+      meta: PaginationMeta.fromJson(
+          (json['meta'] as Map<String, dynamic>?) ?? const {}),
     );
   }
 }

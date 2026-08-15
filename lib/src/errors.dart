@@ -130,13 +130,16 @@ GaruApiError mapHttpError({
   int? retryAfterSec,
 }) {
   if (status == 401) {
-    return GaruAuthenticationError(message: message, requestId: requestId, body: body);
+    return GaruAuthenticationError(
+        message: message, requestId: requestId, body: body);
   }
   if (status == 403) {
-    return GaruPermissionError(message: message, requestId: requestId, body: body);
+    return GaruPermissionError(
+        message: message, requestId: requestId, body: body);
   }
   if (status == 404) {
-    return GaruNotFoundError(message: message, requestId: requestId, body: body);
+    return GaruNotFoundError(
+        message: message, requestId: requestId, body: body);
   }
   if (status == 400 || status == 422) {
     return GaruValidationError(

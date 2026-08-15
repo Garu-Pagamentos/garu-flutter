@@ -79,7 +79,8 @@ class ProductPortalConfig {
 
   final Map<String, dynamic> raw;
 
-  factory ProductPortalConfig.fromJson(Map<String, dynamic> json) => ProductPortalConfig(
+  factory ProductPortalConfig.fromJson(Map<String, dynamic> json) =>
+      ProductPortalConfig(
         productId: (json['productId'] as num?)?.toString() ?? '',
         businessName: json['businessName'] as String?,
         logoUrl: json['logoUrl'] as String?,
@@ -92,7 +93,8 @@ class ProductPortalConfig {
         requireCancelReason: json['requireCancelReason'] as bool?,
         cancelAtPeriodEndOnly: json['cancelAtPeriodEndOnly'] as bool?,
         sendCancellationEmail: json['sendCancellationEmail'] as bool?,
-        sendPaymentMethodUpdatedEmail: json['sendPaymentMethodUpdatedEmail'] as bool?,
+        sendPaymentMethodUpdatedEmail:
+            json['sendPaymentMethodUpdatedEmail'] as bool?,
         customSuccessMessage: json['customSuccessMessage'] as String?,
         customCancellationMessage: json['customCancellationMessage'] as String?,
         customWelcomeText: json['customWelcomeText'] as String?,
@@ -142,18 +144,26 @@ class SetProductPortalConfigParams {
         if (businessName != null) 'businessName': businessName,
         if (logoUrl != null) 'logoUrl': logoUrl,
         if (primaryColor != null) 'primaryColor': primaryColor,
-        if (allowCancelSubscription != null) 'allowCancelSubscription': allowCancelSubscription,
-        if (allowUpdatePaymentMethod != null) 'allowUpdatePaymentMethod': allowUpdatePaymentMethod,
-        if (allowUpdateBillingInfo != null) 'allowUpdateBillingInfo': allowUpdateBillingInfo,
+        if (allowCancelSubscription != null)
+          'allowCancelSubscription': allowCancelSubscription,
+        if (allowUpdatePaymentMethod != null)
+          'allowUpdatePaymentMethod': allowUpdatePaymentMethod,
+        if (allowUpdateBillingInfo != null)
+          'allowUpdateBillingInfo': allowUpdateBillingInfo,
         if (allowViewInvoices != null) 'allowViewInvoices': allowViewInvoices,
         if (allowApplyCoupons != null) 'allowApplyCoupons': allowApplyCoupons,
-        if (requireCancelReason != null) 'requireCancelReason': requireCancelReason,
-        if (cancelAtPeriodEndOnly != null) 'cancelAtPeriodEndOnly': cancelAtPeriodEndOnly,
-        if (sendCancellationEmail != null) 'sendCancellationEmail': sendCancellationEmail,
+        if (requireCancelReason != null)
+          'requireCancelReason': requireCancelReason,
+        if (cancelAtPeriodEndOnly != null)
+          'cancelAtPeriodEndOnly': cancelAtPeriodEndOnly,
+        if (sendCancellationEmail != null)
+          'sendCancellationEmail': sendCancellationEmail,
         if (sendPaymentMethodUpdatedEmail != null)
           'sendPaymentMethodUpdatedEmail': sendPaymentMethodUpdatedEmail,
-        if (customSuccessMessage != null) 'customSuccessMessage': customSuccessMessage,
-        if (customCancellationMessage != null) 'customCancellationMessage': customCancellationMessage,
+        if (customSuccessMessage != null)
+          'customSuccessMessage': customSuccessMessage,
+        if (customCancellationMessage != null)
+          'customCancellationMessage': customCancellationMessage,
         if (customWelcomeText != null) 'customWelcomeText': customWelcomeText,
       };
 }

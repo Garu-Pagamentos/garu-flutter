@@ -86,10 +86,12 @@ class GaruWebhooks {
       throw GaruSignatureVerificationError(message: 'Signature mismatch');
     }
 
-    final body = jsonDecode(utf8.decode(params.payload)) as Map<String, dynamic>;
+    final body =
+        jsonDecode(utf8.decode(params.payload)) as Map<String, dynamic>;
     return VerifiedWebhook(
       event: body,
-      timestamp: DateTime.fromMillisecondsSinceEpoch(parsed.timestamp * 1000, isUtc: true),
+      timestamp: DateTime.fromMillisecondsSinceEpoch(parsed.timestamp * 1000,
+          isUtc: true),
     );
   }
 

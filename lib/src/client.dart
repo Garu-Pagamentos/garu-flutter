@@ -7,6 +7,8 @@ import 'resources/meta.dart';
 import 'resources/products.dart';
 import 'resources/scheduled_charges.dart';
 import 'webhooks.dart';
+import 'resources/installment_plans.dart';
+import 'resources/refund_requests.dart';
 
 /// Configuration for [Garu]. All fields except [apiKey] have sensible defaults.
 class GaruOptions {
@@ -56,6 +58,8 @@ class Garu {
     charges = Charges(_http);
     customers = Customers(_http);
     products = Products(_http);
+    installmentPlans = InstallmentPlans(_http);
+    refundRequests = RefundRequests(_http);
     scheduledCharges = ScheduledCharges(_http);
     meta = Meta(_http);
   }
@@ -64,6 +68,12 @@ class Garu {
   late final Charges charges;
   late final Customers customers;
   late final Products products;
+
+  /// Boleto parcelado (carnê): one product sold as N monthly bank slips.
+  late final InstallmentPlans installmentPlans;
+
+  /// Refunds Garu has been asked to make and cannot make for you.
+  late final RefundRequests refundRequests;
   late final ScheduledCharges scheduledCharges;
   late final Meta meta;
 

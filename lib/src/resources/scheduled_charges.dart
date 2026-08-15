@@ -18,7 +18,7 @@ class CreateScheduledChargeParams {
     this.trialDays,
     this.maxRecoveryDays,
     this.idempotencyKey,
-  })  : assert(
+  }) : assert(
           maxRecoveryDays == null ||
               (maxRecoveryDays >= 1 && maxRecoveryDays <= 365),
           'maxRecoveryDays must be between 1 and 365',
@@ -79,7 +79,8 @@ class ScheduledCharges {
 
   /// Create a one-time or recurring scheduled charge. Auto-attaches
   /// `X-Idempotency-Key` (UUIDv4) unless provided.
-  Future<ScheduledChargeRecord> create(CreateScheduledChargeParams params) async {
+  Future<ScheduledChargeRecord> create(
+      CreateScheduledChargeParams params) async {
     // Pix Automático (BACEN auto-debit recurring Pix) only makes sense on a
     // recurring series tied to a product. Checked in debug builds; the gateway
     // is authoritative and rejects violations with 400 / 404 / 409.
@@ -130,17 +131,20 @@ class ScheduledCharges {
     // (Multi-value query keys handled server-side; the SDK passes the first
     // for now — pass status as comma-separated if you need multiple in v0.x.)
 
-    final json = await _http.request('GET', '/api/scheduled-charges', query: query);
+    final json =
+        await _http.request('GET', '/api/scheduled-charges', query: query);
     return PaginatedList.fromJson(json, ScheduledChargeRecord.fromJson);
   }
 
   /// Detail bundle: charge + event timeline + linked transactions. Returns
   /// the raw map for now; typed models for events/transactions land in v1.
   Future<Map<String, dynamic>> get(String id) {
-    return _http.request('GET', '/api/scheduled-charges/${Uri.encodeComponent(id)}');
+    return _http.request(
+        'GET', '/api/scheduled-charges/${Uri.encodeComponent(id)}');
   }
 
-  Future<ScheduledChargeRecord> markPaid(String id, {int? cycleNumber, String? note}) async {
+  Future<ScheduledChargeRecord> markPaid(String id,
+      {int? cycleNumber, String? note}) async {
     final json = await _http.request(
       'POST',
       '/api/scheduled-charges/${Uri.encodeComponent(id)}/mark-paid',
@@ -171,7 +175,8 @@ class ScheduledCharges {
   }
 
   Future<ScheduledChargeRecord> resume(String id) async {
-    final json = await _http.request('POST', '/api/scheduled-charges/${Uri.encodeComponent(id)}/resume');
+    final json = await _http.request(
+        'POST', '/api/scheduled-charges/${Uri.encodeComponent(id)}/resume');
     return ScheduledChargeRecord.fromJson(json);
   }
 
@@ -201,14 +206,16 @@ class ScheduledCharges {
   /// }
   /// ```
   Future<ChargeNowResult> chargeNow(String id) async {
-    final json = await _http.request('POST', '/api/scheduled-charges/${Uri.encodeComponent(id)}/charge-now');
+    final json = await _http.request(
+        'POST', '/api/scheduled-charges/${Uri.encodeComponent(id)}/charge-now');
     return ChargeNowResult.fromJson(json);
   }
 
   /// Hard-stop future cycles (recurring only). The in-flight cycle can
   /// still be paid; only after that does the series transition to
   /// `recurrence_canceled`. Final.
-  Future<ScheduledChargeRecord> cancelRecurrence(String id, {String? reason}) async {
+  Future<ScheduledChargeRecord> cancelRecurrence(String id,
+      {String? reason}) async {
     final json = await _http.request(
       'POST',
       '/api/scheduled-charges/${Uri.encodeComponent(id)}/cancel-recurrence',
@@ -218,7 +225,8 @@ class ScheduledCharges {
   }
 
   /// Stripe-style soft-cancel. Reversible.
-  Future<ScheduledChargeRecord> cancelAtPeriodEnd(String id, {required bool enabled}) async {
+  Future<ScheduledChargeRecord> cancelAtPeriodEnd(String id,
+      {required bool enabled}) async {
     final json = await _http.request(
       'POST',
       '/api/scheduled-charges/${Uri.encodeComponent(id)}/cancel-at-period-end',
@@ -229,7 +237,8 @@ class ScheduledCharges {
 
   /// Swap the saved card. The new payment method must belong to the same
   /// customer.
-  Future<ScheduledChargeRecord> changePaymentMethod(String id, int paymentMethodId) async {
+  Future<ScheduledChargeRecord> changePaymentMethod(
+      String id, int paymentMethodId) async {
     final json = await _http.request(
       'POST',
       '/api/scheduled-charges/${Uri.encodeComponent(id)}/payment-method',
@@ -241,7 +250,8 @@ class ScheduledCharges {
   /// Clear the saved card. Future cycles fall back to the email-with-link
   /// flow so the customer can re-enter card details or pay via PIX/Boleto.
   Future<ScheduledChargeRecord> clearPaymentMethod(String id) async {
-    final json = await _http.request('DELETE', '/api/scheduled-charges/${Uri.encodeComponent(id)}/payment-method');
+    final json = await _http.request('DELETE',
+        '/api/scheduled-charges/${Uri.encodeComponent(id)}/payment-method');
     return ScheduledChargeRecord.fromJson(json);
   }
 

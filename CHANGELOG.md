@@ -1,3 +1,36 @@
+## 0.7.0
+
+### Added
+
+- **`garu.installmentPlans` — boleto parcelado (carnê).** One product sold as N
+  monthly bank slips. This is seller-financed consumer credit, not a card
+  instalment: nobody guarantees a boleto, so a buyer who stops at parcela 4
+  leaves the seller with four parcelas and no advance from anyone. Only the
+  first slip exists at creation; the rest are emitted month by month and the
+  sale activates when parcela 1 compensates.
+  - `create`, `list`, `get`, `reissueInstallment`, `postponeInstallment`,
+    `markInstallmentPaid`, `cancel`, `requestRefund`.
+  - `create` always sends `X-Idempotency-Key`. It matters more here than
+    anywhere else in the API: the call registers a real boleto, so a blind
+    retry hands one buyer two payable barcodes.
+  - `CreateInstallmentPlanParams.affiliateId` is fixed at sale time — every
+    later parcela inherits it, so omitting it pays that affiliate nothing for
+    the whole carnê.
+  - `Installment.isPayable` is false until a slip is actually registered, so a
+    future parcela is never rendered to a buyer as an empty barcode.
+  - `InstallmentPlan.remainingScheduled` clamps at zero: multa and mora can
+    push `totalCollected` above `totalScheduled`, and naive subtraction would
+    report a negative debt.
+
+- **`garu.refundRequests` — refunds Garu cannot make for you.** A boleto cannot
+  be reversed and Celcoin exposes no Pix devolução, so the funds already
+  settled to the seller and the return is a bank transfer only they can make.
+  `list`, `get`, `confirm`, `reject`. Confirming records that the seller
+  *asserts* the money went back; Garu never observes the transfer.
+
+- **`V1List<T>`** for the `/api/v1` list envelope, which is flat
+  (`data`/`count`/`totalCount`/`totalPages`) rather than nesting under `meta`.
+
 ## 0.6.0
 
 Makes the **products** resource read-write. Tracks `@garuhq/node@0.15.0`. Additive — existing read-only callers (`list` / `get` / `portalConfig`) are unchanged.

@@ -138,7 +138,8 @@ class ChargeNowResult {
 
   final Map<String, dynamic> raw;
 
-  factory ChargeNowResult.fromJson(Map<String, dynamic> json) => ChargeNowResult(
+  factory ChargeNowResult.fromJson(Map<String, dynamic> json) =>
+      ChargeNowResult(
         outcome: ChargeNowOutcome.fromWire(json['outcome'] as String?),
         message: (json['message'] as String?) ?? '',
         cycleNumber: (json['cycleNumber'] as num?)?.toInt(),
@@ -234,11 +235,12 @@ class ScheduledChargeAttempt {
         cycleId: (json['cycleId'] as String?) ?? '',
         cycleNumber: (json['cycleNumber'] as num?)?.toInt() ?? 0,
         attemptNumber: (json['attemptNumber'] as num?)?.toInt() ?? 0,
-        attemptedAt:
-            _parseDate(json['attemptedAt']) ?? DateTime.now().toUtc(),
-        source: ScheduledChargeAttemptSource.fromWire(json['source'] as String?),
+        attemptedAt: _parseDate(json['attemptedAt']) ?? DateTime.now().toUtc(),
+        source:
+            ScheduledChargeAttemptSource.fromWire(json['source'] as String?),
         paymentMethod: (json['paymentMethod'] as String?) ?? 'card',
-        status: ScheduledChargeAttemptStatus.fromWire(json['status'] as String?),
+        status:
+            ScheduledChargeAttemptStatus.fromWire(json['status'] as String?),
         paymentMethodId: (json['paymentMethodId'] as num?)?.toInt(),
         cardLast4: json['cardLast4'] as String?,
         cardBrand: json['cardBrand'] as String?,

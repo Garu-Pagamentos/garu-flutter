@@ -4,18 +4,22 @@ import 'package:test/test.dart';
 void main() {
   group('GaruFailureCode', () {
     test('parses all known wire values', () {
-      expect(GaruFailureCode.fromWire('insufficient_funds'), GaruFailureCode.insufficientFunds);
-      expect(GaruFailureCode.fromWire('card_expired'), GaruFailureCode.cardExpired);
+      expect(GaruFailureCode.fromWire('insufficient_funds'),
+          GaruFailureCode.insufficientFunds);
+      expect(GaruFailureCode.fromWire('card_expired'),
+          GaruFailureCode.cardExpired);
       expect(GaruFailureCode.fromWire('do_not_honor_repeated'),
           GaruFailureCode.doNotHonorRepeated);
     });
 
     test('falls back to unknown for unrecognized values (forward compat)', () {
-      expect(GaruFailureCode.fromWire('some_future_code'), GaruFailureCode.unknown);
+      expect(GaruFailureCode.fromWire('some_future_code'),
+          GaruFailureCode.unknown);
       expect(GaruFailureCode.fromWire(null), GaruFailureCode.unknown);
     });
 
-    test('isPermanent flags card_expired / card_canceled / fraud_suspected', () {
+    test('isPermanent flags card_expired / card_canceled / fraud_suspected',
+        () {
       expect(GaruFailureCode.cardExpired.isPermanent, isTrue);
       expect(GaruFailureCode.cardCanceled.isPermanent, isTrue);
       expect(GaruFailureCode.fraudSuspected.isPermanent, isTrue);
@@ -41,7 +45,8 @@ void main() {
     });
 
     test('handles missing meta gracefully', () {
-      final list = PaginatedList.fromJson({'data': <Map<String, dynamic>>[]}, (json) => json);
+      final list = PaginatedList.fromJson(
+          {'data': <Map<String, dynamic>>[]}, (json) => json);
       expect(list.data, isEmpty);
       expect(list.meta.page, 1);
     });
@@ -128,7 +133,9 @@ void main() {
   });
 
   group('ProductPortalConfig + SetProductPortalConfigParams', () {
-    test('parses persisted config — productId arrives as String for symmetry with request', () {
+    test(
+        'parses persisted config — productId arrives as String for symmetry with request',
+        () {
       final c = ProductPortalConfig.fromJson({
         'productId': 57,
         'businessName': 'Coach Maria',
@@ -287,7 +294,8 @@ void main() {
       expect(PaymentMethod.fromWire('pix'), PaymentMethod.pix);
       expect(PaymentMethod.fromWire('boleto'), PaymentMethod.boleto);
       expect(PaymentMethod.fromWire('card'), PaymentMethod.card);
-      expect(PaymentMethod.fromWire('pix_automatic'), PaymentMethod.pixAutomatic);
+      expect(
+          PaymentMethod.fromWire('pix_automatic'), PaymentMethod.pixAutomatic);
     });
 
     test('pixAutomatic carries the pix_automatic wire value', () {
@@ -301,7 +309,8 @@ void main() {
   });
 
   group('Charge.method (webhook paymentMethod branching)', () {
-    test('a pix_automatic transaction resolves to PaymentMethod.pixAutomatic', () {
+    test('a pix_automatic transaction resolves to PaymentMethod.pixAutomatic',
+        () {
       final c = Charge.fromJson({
         'id': 27,
         'value': 14.9,
@@ -313,7 +322,9 @@ void main() {
       expect(c.method, PaymentMethod.pixAutomatic);
     });
 
-    test('an unknown future method keeps the raw string and resolves to unknown', () {
+    test(
+        'an unknown future method keeps the raw string and resolves to unknown',
+        () {
       final c = Charge.fromJson({
         'id': 28,
         'value': 1,
@@ -368,7 +379,8 @@ void main() {
       expect(Uri.encodeComponent('../charges'), '..%2Fcharges');
     });
 
-    test('UUIDs round-trip unchanged (no escaping needed for hex-and-dash)', () {
+    test('UUIDs round-trip unchanged (no escaping needed for hex-and-dash)',
+        () {
       const uuid = '00d6d5d1-b094-4546-a49a-f9864e822c3c';
       expect(Uri.encodeComponent(uuid), uuid);
     });

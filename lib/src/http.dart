@@ -48,11 +48,13 @@ class HttpRunner {
     Object? lastError;
     for (var attempt = 0; attempt <= maxRetries; attempt++) {
       try {
-        final response = await _send(method, uri, body, extraHeaders).timeout(timeout);
+        final response =
+            await _send(method, uri, body, extraHeaders).timeout(timeout);
         if (response.statusCode >= 200 && response.statusCode < 300) {
           return _decode(response);
         }
-        if (_retryableStatuses.contains(response.statusCode) && attempt < maxRetries) {
+        if (_retryableStatuses.contains(response.statusCode) &&
+            attempt < maxRetries) {
           await _delay(attempt, response.headers['retry-after']);
           continue;
         }
@@ -64,12 +66,14 @@ class HttpRunner {
         if (attempt >= maxRetries) throw lastError;
         await _delay(attempt, null);
       } catch (e) {
-        lastError = GaruConnectionError(message: 'Connection error: $e', cause: e);
+        lastError =
+            GaruConnectionError(message: 'Connection error: $e', cause: e);
         if (attempt >= maxRetries) throw lastError;
         await _delay(attempt, null);
       }
     }
-    throw lastError ?? GaruConnectionError(message: 'Unknown connection failure');
+    throw lastError ??
+        GaruConnectionError(message: 'Unknown connection failure');
   }
 
   Future<http.Response> _send(
