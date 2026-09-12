@@ -4,6 +4,7 @@ import 'http.dart';
 import 'resources/charges.dart';
 import 'resources/customers.dart';
 import 'resources/meta.dart';
+import 'resources/offers.dart';
 import 'resources/products.dart';
 import 'resources/scheduled_charges.dart';
 import 'webhooks.dart';
@@ -58,6 +59,7 @@ class Garu {
     charges = Charges(_http);
     customers = Customers(_http);
     products = Products(_http);
+    offers = Offers(_http);
     installmentPlans = InstallmentPlans(_http);
     refundRequests = RefundRequests(_http);
     scheduledCharges = ScheduledCharges(_http);
@@ -68,6 +70,9 @@ class Garu {
   late final Charges charges;
   late final Customers customers;
   late final Products products;
+
+  /// Extra named prices on a product, each behind its own link.
+  late final Offers offers;
 
   /// Boleto parcelado (carnê): one product sold as N monthly bank slips.
   late final InstallmentPlans installmentPlans;

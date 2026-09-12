@@ -84,8 +84,12 @@ class CreateProductParams {
 
   final String name;
 
-  /// Price in centavos (e.g. `2990` for R$29,90).
-  final int? value;
+  /// Price in **reais** (decimal BRL) — `29.90` is R$29,90.
+  ///
+  /// NOT centavos. Until 0.8.0 this field was an `int` documented as
+  /// centavos, so `2990` meant R$29,90; the gateway read the same number as
+  /// reais and priced the product at R$2.990,00.
+  final num? value;
   final String? description;
   final String? image;
   final List<String>? tags;
@@ -103,10 +107,11 @@ class CreateProductParams {
   final String? returnUrlButtonText;
   final String? statementDescriptor;
 
-  /// Idempotency key for the create request. Defaults to a generated UUIDv4.
-  /// Pass your own to make a retry across process restarts safe — the gateway
-  /// returns the original product instead of creating a duplicate. Sent as the
-  /// `X-Idempotency-Key` header, not in the body.
+  /// Idempotency key for the create request. Omit it and no key is sent.
+  /// Pass your own — derived from something stable in your domain — to make a
+  /// retry across process restarts safe: the gateway returns the original
+  /// product instead of creating a duplicate. Sent as the `X-Idempotency-Key`
+  /// header, not in the body.
   final String? idempotencyKey;
 
   Map<String, dynamic> toJson() => {
@@ -155,8 +160,12 @@ class UpdateProductParams {
 
   final String? name;
 
-  /// Price in centavos (e.g. `2990` for R$29,90).
-  final int? value;
+  /// Price in **reais** (decimal BRL) — `29.90` is R$29,90.
+  ///
+  /// NOT centavos. Until 0.8.0 this field was an `int` documented as
+  /// centavos, so `2990` meant R$29,90; the gateway read the same number as
+  /// reais and priced the product at R$2.990,00.
+  final num? value;
   final String? description;
   final String? image;
   final List<String>? tags;
@@ -205,17 +214,15 @@ class Products {
   final ProductPortalConfigResource portalConfig;
 
   /// Create a product. POSTs to `/api/products` (gateway returns 201).
-  /// Auto-attaches `X-Idempotency-Key` (UUIDv4) unless
-  /// [CreateProductParams.idempotencyKey] is provided, so the runner's
-  /// transient-failure retries can't create a duplicate.
+  ///
+  /// Sends `X-Idempotency-Key` only when
+  /// [CreateProductParams.idempotencyKey] is supplied.
   Future<Product> create(CreateProductParams params) async {
     final json = await _http.request(
       'POST',
       '/api/products',
       body: params.toJson(),
-      extraHeaders: {
-        'X-Idempotency-Key': params.idempotencyKey ?? generateIdempotencyKey(),
-      },
+      extraHeaders: idempotencyHeaders(params.idempotencyKey),
     );
     return Product.fromJson(json);
   }

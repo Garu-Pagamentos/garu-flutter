@@ -5,6 +5,8 @@
 /// four parcelas and no advance from anyone.
 library;
 
+import '../json.dart';
+
 /// One monthly slip of a carnê.
 class Installment {
   const Installment({
@@ -43,7 +45,7 @@ class Installment {
     final boleto = json['boleto'] as Map<String, dynamic>?;
     return Installment(
       number: (json['number'] as num?)?.toInt() ?? 0,
-      amount: (json['amount'] as num?) ?? 0,
+      amount: toNumOr(json['amount'], 0),
       dueDate: (json['dueDate'] as String?) ?? '',
       status: (json['status'] as String?) ?? 'scheduled',
       paidAt: json['paidAt'] == null
@@ -145,11 +147,11 @@ class InstallmentPlan {
       status: (json['status'] as String?) ?? 'pending_activation',
       installments: (json['installments'] as num?)?.toInt() ?? 0,
       installmentsPaid: (json['installmentsPaid'] as num?)?.toInt() ?? 0,
-      baseValue: (json['baseValue'] as num?) ?? 0,
+      baseValue: toNumOr(json['baseValue'], 0),
       fator: (json['fator'] as num?) ?? 1,
-      installmentAmount: (json['installmentAmount'] as num?) ?? 0,
-      totalScheduled: (json['totalScheduled'] as num?) ?? 0,
-      totalCollected: (json['totalCollected'] as num?) ?? 0,
+      installmentAmount: toNumOr(json['installmentAmount'], 0),
+      totalScheduled: toNumOr(json['totalScheduled'], 0),
+      totalCollected: toNumOr(json['totalCollected'], 0),
       firstDueDate: (json['firstDueDate'] as String?) ?? '',
       graceDays: (json['graceDays'] as num?)?.toInt(),
       cancelReason: json['cancelReason'] as String?,

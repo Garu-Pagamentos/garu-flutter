@@ -1,3 +1,4 @@
+import '../json.dart';
 import '../failure_codes.dart';
 
 /// A scheduled charge series record. Both one-time and recurring charges
@@ -46,7 +47,7 @@ class ScheduledChargeRecord {
         id: (json['id'] as String?) ?? '',
         sellerId: (json['sellerId'] as num?)?.toInt() ?? 0,
         customerId: (json['customerId'] as num?)?.toInt() ?? 0,
-        amount: (json['amount'] as num?) ?? 0,
+        amount: toNumOr(json['amount'], 0),
         type: (json['type'] as String?) ?? 'one_time',
         status: (json['status'] as String?) ?? 'scheduled',
         dueDate: (json['dueDate'] as String?) ?? '',

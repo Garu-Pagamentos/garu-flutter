@@ -16,7 +16,7 @@ void main() {
             'id': 42,
             'uuid': 'b3f2c1e8-6e4a-4b9f-9d1c-2a1f6c3d4e5f',
             'name': 'Plano Pro',
-            'value': 2990,
+            'value': '29.90',
             'pixAutomatic': true,
           }),
           201,
@@ -28,7 +28,7 @@ void main() {
       final product = await garu.products.create(
         const CreateProductParams(
           name: 'Plano Pro',
-          value: 2990,
+          value: 29.90,
           description: 'Acesso completo',
           tags: ['saas', 'pro'],
           pix: true,
@@ -44,7 +44,9 @@ void main() {
 
       final body = jsonDecode(captured.body) as Map<String, dynamic>;
       expect(body['name'], 'Plano Pro');
-      expect(body['value'], 2990);
+      // R$29,90 in reais. Sent as 2990 until 0.8.0, which the gateway read as
+      // reais and priced the product at R$2.990,00.
+      expect(body['value'], 29.90);
       expect(body['description'], 'Acesso completo');
       expect(body['tags'], ['saas', 'pro']);
       expect(body['pix'], true);
@@ -56,12 +58,16 @@ void main() {
       expect(product.uuid, 'b3f2c1e8-6e4a-4b9f-9d1c-2a1f6c3d4e5f');
       expect(product.name, 'Plano Pro');
       expect(product.pixAutomatic, isTrue);
+      // The gateway answers `value` as a STRING on this endpoint — confirmed
+      // against production 2026-09-12. Parsing must survive it.
+      expect(product.value, 29.90);
 
       garu.close();
     });
 
-    test('auto-attaches a UUIDv4 X-Idempotency-Key when none is supplied',
-        () async {
+    test('sends no X-Idempotency-Key when none is supplied', () async {
+      // A key invented per call is different on every attempt, so it protects
+      // nothing while making the request look protected.
       late http.Request captured;
       final client = MockClient((req) async {
         captured = req;
@@ -74,14 +80,8 @@ void main() {
 
       await garu.products.create(const CreateProductParams(name: 'Curso'));
 
-      expect(
-        captured.headers['x-idempotency-key'],
-        matches(
-          RegExp(
-            r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
-          ),
-        ),
-      );
+      expect(captured.headers.containsKey('X-Idempotency-Key'), isFalse);
+      expect(captured.headers.containsKey('x-idempotency-key'), isFalse);
 
       garu.close();
     });
@@ -147,7 +147,7 @@ void main() {
 
       final product = await garu.products.update(
         42,
-        const UpdateProductParams(name: 'Plano Pro+', value: 3990),
+        const UpdateProductParams(name: 'Plano Pro+', value: 39.90),
       );
 
       expect(captured.method, 'PATCH');
@@ -157,7 +157,7 @@ void main() {
       // Partial: only the fields we set are present.
       expect(body.keys.toSet(), {'name', 'value'});
       expect(body['name'], 'Plano Pro+');
-      expect(body['value'], 3990);
+      expect(body['value'], 39.90);
 
       expect(product.name, 'Plano Pro+');
 

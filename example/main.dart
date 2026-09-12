@@ -15,7 +15,7 @@ Future<void> main() async {
   try {
     final charge = await garu.charges.create(
       productId: 'b3f2c1e8-6e4a-4b9f-9d1c-2a1f6c3d4e5f',
-      paymentMethod: 'pix',
+      paymentMethod: ChargeMethod.pix,
       customer: const CustomerInput(
         name: 'Maria Silva',
         email: 'maria@exemplo.com.br',
@@ -23,7 +23,9 @@ Future<void> main() async {
         phone: '11987654321',
       ),
     );
-    print('Charge created: ${charge['id']} status=${charge['status']}');
+    print('Charge ${charge.uuid} status=${charge.status}');
+    print('Cobrado: R\$ ${charge.chargedTotal.toStringAsFixed(2)}');
+    if (charge.pix != null) print('Pix copia e cola: ${charge.pix!.code}');
   } on GaruValidationError catch (e) {
     stderr.writeln('Validation failed: ${e.message}');
   } on GaruApiError catch (e) {

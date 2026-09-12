@@ -1,3 +1,90 @@
+## 0.8.0
+
+The payment path in this SDK had never worked. Creating a charge posted to a
+route that answers 404 and always has, so no Flutter integrator has ever
+collected money through it. Reading a product crashed on every real product.
+Two write fields were documented in the wrong unit, 100x in the expensive
+direction. This release fixes all of it, and adds offers.
+
+Nothing in production depended on the broken paths — a 404 fails loudly and no
+Garu surface calls this SDK. The risk was to whoever picked it up next.
+
+### Fixed
+
+- **`charges.*` now reaches the API.** Every charge method posted to
+  `/api/charges`, which does not exist. Probed against production 2026-09-12:
+  `POST /api/charges` -> 404, `POST /api/v1/charges` -> 401. The resource is
+  rebuilt against `/api/v1/charges`, the versioned public contract, and the
+  request shape is now the one the server actually validates:
+  - a charge is keyed by `uuid`; `retrieve`, `refund` and `cancel` take it
+    instead of a numeric id
+  - `paymentMethod` is `pix` / `boleto` / **`creditCard`** — use `ChargeMethod`
+  - `CardInput` takes `expirationDate` (`'2030-12'`) and `installments`. It
+    previously sent `expirationMonth` + `expirationYear` and omitted the
+    required `expirationDate`, so a card charge could only ever 400
+  - `CustomerInput` drops `personType`, which is not in the contract and was
+    being stripped silently, and gains the optional address block
+  - the dead `amount` parameter is gone. The server prices the charge from the
+    product, or from the offer you name; a caller cannot name its own price
+- **`Product` no longer crashes on a real product.** `products.get()` read
+  `value` as a `num`, but that endpoint answers a **string** — production
+  returned `"29.90"` on 2026-09-12. In Dart that cast throws. Every money field
+  now accepts either shape. The tests had only ever fed it a number.
+- **`RefundParams.amount` and `CreateProductParams.value` are reais, not
+  centavos.** Both were typed `int` and documented as centavos, so `1000` meant
+  R$10,00 to a reader and R$1.000,00 to the gateway — 100x, in the direction
+  that costs money. Both are now `num` and documented in reais. `@garuhq/node`
+  and the CLI were corrected the same way on 2026-07-18; Flutter was missed.
+
+### Changed — read this before upgrading
+
+- **The SDK no longer invents idempotency keys.** `charges.create`,
+  `charges.refund`, `products.create`, `scheduledCharges.create` and
+  `installmentPlans.create` used to fabricate a UUIDv4 whenever the caller
+  passed none. That is worse than sending nothing: a key only means something if
+  the SAME key comes back on a retry, and a key invented per call is different
+  every time. It bought no protection while making the request look protected.
+  It is the cause of the 2026-09-08 triple charge, and `@garuhq/node` removed
+  the same behaviour in 5.0.0.
+
+  Pass `idempotencyKey` derived from something stable in your own domain — an
+  order id, a booking id — so a retry reproduces it.
+
+- **An unkeyed `POST` is no longer retried.** Dropping the invented key on its
+  own would have been a downgrade: the runner retries on timeouts and 5xx, so an
+  unprotected create could be replayed by the SDK itself. A `POST` without an
+  idempotency key is now attempted exactly once. `GET`, `PATCH` and `DELETE`
+  retry as before.
+
+  This matters most for `installmentPlans.create`: that endpoint has no
+  duplicate guard at all, so a replay registers a second real boleto against the
+  same buyer.
+
+- `charges.create`, `retrieve` and `refund` return a typed `PublicCharge`
+  instead of a raw map. `Charge` is unchanged and still models the
+  `transaction.*` payload that arrives on webhooks — the two are not
+  interchangeable.
+
+### Added
+
+- **`garu.offers` — sell one product at several prices, each behind its own
+  link** (Garu v0.23.0). An offer overrides the price and nothing else; payment
+  methods, the instalment ceiling, carnê, name, description and image stay on
+  the product, and a bare product link keeps charging `product.value`.
+  - `list`, `get`, `create`, `update`, `del`
+  - `charges.create(offer: ...)` charges one directly. The server resolves the
+    price from the offer; the amount never comes from the caller.
+  - `Offer.linkParam` gives you what goes after `?offer=` — the slug when the
+    seller chose one, the id otherwise. A slug is public and guessable by
+    anyone holding the product link, so omit it for pricing that should not
+    circulate.
+  - `value` is in reais. Offers are refused on subscription products, and
+    answer 409 when the price would not cover a product's fixed-share
+    co-producers.
+- `ChargeMethod` constants for the payment methods the API validates.
+- `generateIdempotencyKey()` is exported, for callers that want to mint and
+  store one.
+
 ## 0.7.0
 
 ### Added

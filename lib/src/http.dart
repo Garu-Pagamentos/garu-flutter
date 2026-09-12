@@ -45,8 +45,14 @@ class HttpRunner {
                 },
         );
 
+    // A POST creates something. Replaying one after a timeout is how a buyer
+    // gets charged twice or handed a second payable boleto, so it is only
+    // retried when the caller supplied an idempotency key for the server to
+    // deduplicate against. Everything else here is idempotent by design.
+    final attempts = _isReplaySafe(method, extraHeaders) ? maxRetries : 0;
+
     Object? lastError;
-    for (var attempt = 0; attempt <= maxRetries; attempt++) {
+    for (var attempt = 0; attempt <= attempts; attempt++) {
       try {
         final response =
             await _send(method, uri, body, extraHeaders).timeout(timeout);
@@ -54,7 +60,7 @@ class HttpRunner {
           return _decode(response);
         }
         if (_retryableStatuses.contains(response.statusCode) &&
-            attempt < maxRetries) {
+            attempt < attempts) {
           await _delay(attempt, response.headers['retry-after']);
           continue;
         }
@@ -63,17 +69,30 @@ class HttpRunner {
         rethrow;
       } on TimeoutException catch (e) {
         lastError = GaruConnectionError(message: 'Request timed out', cause: e);
-        if (attempt >= maxRetries) throw lastError;
+        if (attempt >= attempts) throw lastError;
         await _delay(attempt, null);
       } catch (e) {
         lastError =
             GaruConnectionError(message: 'Connection error: $e', cause: e);
-        if (attempt >= maxRetries) throw lastError;
+        if (attempt >= attempts) throw lastError;
         await _delay(attempt, null);
       }
     }
     throw lastError ??
         GaruConnectionError(message: 'Unknown connection failure');
+  }
+
+  /// Whether this request may be sent again after a failure.
+  ///
+  /// Only POST is held back, and only when it carries no `X-Idempotency-Key`:
+  /// without one the server has nothing to deduplicate against, so a retry
+  /// creates a second charge, carnê or product. `/api/v1/installment-plans` is
+  /// the sharpest case — it has no duplicate guard at all, so an unkeyed replay
+  /// registers a second real boleto against the same buyer.
+  static bool _isReplaySafe(String method, Map<String, String>? headers) {
+    if (method != 'POST') return true;
+    return headers?.keys.any((k) => k.toLowerCase() == 'x-idempotency-key') ??
+        false;
   }
 
   Future<http.Response> _send(

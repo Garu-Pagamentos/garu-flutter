@@ -73,12 +73,17 @@ void main() {
       expect(carne.installmentsDetail, hasLength(2));
     });
 
-    test('always sends an idempotency key', () async {
-      // The call registers a REAL boleto. A retry without a key puts two
-      // payable barcodes in one buyer's hands.
-      late http.Request captured;
+    test('forwards the caller key, and never invents one', () async {
+      // The call registers a REAL boleto, and /api/v1/installment-plans has no
+      // duplicate guard — the key is the only thing that makes a retry safe.
+      // Inventing one per call did not provide that: a fresh UUIDv4 on the
+      // second attempt matches nothing, so the server creates a second carnê
+      // and puts two payable barcodes in one buyer's hands. The SDK now sends
+      // the caller's key when there is one and declines to replay when there
+      // is not.
+      final keys = <String?>[];
       final client = MockClient((req) async {
-        captured = req;
+        keys.add(req.headers['X-Idempotency-Key']);
         return http.Response(jsonEncode(planJson), 201,
             headers: {'content-type': 'application/json'});
       });
@@ -91,8 +96,40 @@ void main() {
           installments: 12,
         ),
       );
+      await garu.installmentPlans.create(
+        const CreateInstallmentPlanParams(
+          productId: productUuid,
+          customerId: 4821,
+          installments: 12,
+          idempotencyKey: 'order:4472:carne',
+        ),
+      );
 
-      expect(captured.headers['X-Idempotency-Key'], isNotEmpty);
+      expect(keys, [null, 'order:4472:carne']);
+    });
+
+    test('an unkeyed carnê create is never replayed', () async {
+      var calls = 0;
+      final client = MockClient((req) async {
+        calls++;
+        return http.Response('{"message":"upstream down"}', 503,
+            headers: {'content-type': 'application/json'});
+      });
+      final garu = Garu(apiKey: 'sk_test_x', httpClient: client, maxRetries: 2);
+
+      await expectLater(
+        garu.installmentPlans.create(
+          const CreateInstallmentPlanParams(
+            productId: productUuid,
+            customerId: 4821,
+            installments: 12,
+          ),
+        ),
+        throwsA(isA<GaruApiError>()),
+      );
+
+      // One attempt, so one boleto at most.
+      expect(calls, 1);
     });
 
     test('forwards the affiliate so the commission is not lost', () async {

@@ -1,3 +1,4 @@
+import '../json.dart';
 import '../failure_codes.dart';
 import 'payment_method.dart';
 
@@ -52,7 +53,7 @@ class Charge {
 
   factory Charge.fromJson(Map<String, dynamic> json) => Charge(
         id: (json['id'] as num).toInt(),
-        value: (json['value'] as num?) ?? 0,
+        value: toNumOr(json['value'], 0),
         paymentMethod: (json['paymentMethod'] as String?) ?? 'unknown',
         status: (json['status'] as String?) ?? 'unknown',
         date: _parseDate(json['date']) ?? DateTime.now().toUtc(),

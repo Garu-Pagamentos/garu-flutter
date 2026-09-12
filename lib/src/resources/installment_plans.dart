@@ -86,7 +86,7 @@ class InstallmentPlans {
 
   /// Sell a product as a carnê.
   ///
-  /// Always sends `X-Idempotency-Key`, which matters more here than anywhere
+  /// Pass [CreateInstallmentPlanParams.idempotencyKey]. It matters more here than anywhere
   /// else in the API: this call registers a REAL boleto at the bank, so a
   /// blind retry hands one buyer two payable barcodes.
   ///
@@ -106,9 +106,7 @@ class InstallmentPlans {
       'POST',
       '/api/v1/installment-plans',
       body: params.toJson(),
-      extraHeaders: {
-        'X-Idempotency-Key': params.idempotencyKey ?? generateIdempotencyKey(),
-      },
+      extraHeaders: idempotencyHeaders(params.idempotencyKey),
     );
     return InstallmentPlan.fromJson(json);
   }
