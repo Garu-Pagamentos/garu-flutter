@@ -162,22 +162,27 @@ void main() {
 
   group('charges money', () {
     test('keeps the base price and what was actually charged apart', () {
-      // A R$349 sale in 2x collects ~R$358 in total — roughly R$179 per
-      // parcela. Reading either number as the other is the 21-month
-      // undercharge: `amount` is the base price, `chargedTotal` is collected.
+      // Figures derived from the gateway's own ladder at the platform default
+      // fator of 1.2, not copied from what this SDK happens to return:
+      //   per parcela = 349 * (1 + (2-1)/11 * (1.2-1)) / 2 = 177.67
+      //   collected   = 177.67 * 2                         = 355.34
+      // A R$349 sale in 2x collects ~R$355, not ~R$178. Reading either number
+      // as the other is the 21-month undercharge: `amount` is the base price,
+      // `chargedTotal` is what the buyer actually pays.
       final charge = PublicCharge.fromJson(chargeJson({
         'paymentMethod': 'creditCard',
         'amount': 349.0,
-        'chargedTotal': 358.06,
+        'chargedTotal': 355.34,
         'installments': 2,
       }));
 
       expect(charge.amount, 349.0);
-      expect(charge.chargedTotal, 358.06);
+      expect(charge.chargedTotal, 355.34);
+      // The buyer pays the markup, so the total is above the sticker price.
       expect(charge.chargedTotal, greaterThan(charge.amount));
-      // Not the per-parcela figure, which would be ~179.
-      expect(charge.chargedTotal, greaterThan(200));
-      expect(charge.chargedTotal / charge.installments, closeTo(179.03, 0.01));
+      // And it is the TOTAL, not one parcela — half of it would be ~177.67.
+      expect(charge.chargedTotal / charge.installments, closeTo(177.67, 0.01));
+      expect(charge.chargedTotal, greaterThan(300));
     });
 
     test('falls back to amount when chargedTotal is absent', () {
