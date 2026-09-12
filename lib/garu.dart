@@ -6,7 +6,7 @@
 /// final garu = Garu(apiKey: 'sk_live_...');
 /// final charge = await garu.charges.create(
 ///   productId: 'b3f2c1e8-6e4a-4b9f-9d1c-2a1f6c3d4e5f',
-///   paymentMethod: 'pix',
+///   paymentMethod: ChargeMethod.pix,
 ///   customer: const CustomerInput(
 ///     name: 'Maria Silva',
 ///     email: 'maria@exemplo.com.br',
@@ -25,6 +25,17 @@ export 'src/resources/installment_plans.dart';
 export 'src/resources/refund_requests.dart';
 export 'src/failure_codes.dart' show GaruFailureCode;
 export 'src/models/charge.dart' show Charge;
+export 'src/models/offer.dart' show Offer, OfferList;
+export 'src/models/public_charge.dart'
+    show
+        ChargeBoleto,
+        ChargeCard,
+        ChargeCustomer,
+        ChargePix,
+        ChargeProduct,
+        ChargeRefund,
+        PublicCharge,
+        PublicChargeList;
 export 'src/models/customer.dart' show Customer;
 export 'src/models/paginated.dart' show PaginatedList, PaginationMeta;
 export 'src/models/payment_method.dart' show PaymentMethod;
@@ -38,10 +49,13 @@ export 'src/models/scheduled_charge.dart'
         ScheduledChargeAttemptSource,
         ScheduledChargeAttemptStatus,
         ScheduledChargeRecord;
+export 'src/idempotency.dart' show generateIdempotencyKey;
 export 'src/resources/charges.dart'
-    show Charges, CardInput, CustomerInput, RefundParams;
+    show Charges, CardInput, ChargeMethod, CustomerInput, RefundParams;
 export 'src/resources/customers.dart' show Customers, CustomerParams;
 export 'src/resources/meta.dart' show Meta;
+export 'src/resources/offers.dart'
+    show CreateOfferParams, Offers, UpdateOfferParams;
 export 'src/resources/products.dart'
     show
         Products,

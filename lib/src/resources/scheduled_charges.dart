@@ -78,7 +78,7 @@ class ScheduledCharges {
   final HttpRunner _http;
 
   /// Create a one-time or recurring scheduled charge. Auto-attaches
-  /// `X-Idempotency-Key` (UUIDv4) unless provided.
+  /// `X-Idempotency-Key` only when the caller supplies one.
   Future<ScheduledChargeRecord> create(
       CreateScheduledChargeParams params) async {
     // Pix Automático (BACEN auto-debit recurring Pix) only makes sense on a
@@ -93,9 +93,7 @@ class ScheduledCharges {
       'POST',
       '/api/scheduled-charges',
       body: params.toJson(),
-      extraHeaders: {
-        'X-Idempotency-Key': params.idempotencyKey ?? generateIdempotencyKey(),
-      },
+      extraHeaders: idempotencyHeaders(params.idempotencyKey),
     );
     return ScheduledChargeRecord.fromJson(json);
   }

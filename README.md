@@ -21,7 +21,7 @@ final garu = Garu(apiKey: 'sk_live_...');
 
 final charge = await garu.charges.create(
   productId: 'b3f2c1e8-6e4a-4b9f-9d1c-2a1f6c3d4e5f',
-  paymentMethod: 'pix',
+  paymentMethod: ChargeMethod.pix,
   customer: const CustomerInput(
     name: 'Maria Silva',
     email: 'maria@exemplo.com.br',
@@ -30,7 +30,7 @@ final charge = await garu.charges.create(
   ),
 );
 
-print('Charge id: ${charge['id']}');
+print('Charge ${charge.uuid} — pague com ${charge.pix?.code}');
 ```
 
 ## Configuration
@@ -50,10 +50,84 @@ final garu = Garu(
 | --------------------------------- | ---------------------------------------------- |
 | `charges.create({...})`           | Create a PIX, boleto, or credit-card charge.   |
 | `charges.list({...})`             | List charges with pagination + filters.        |
-| `charges.get(id)`                 | Fetch a single charge by id.                   |
-| `charges.refund(id, [params])`    | Full or partial refund.                        |
+| `charges.retrieve(uuid)`          | Fetch a single charge by uuid.                 |
+| `charges.refund(uuid, [params])`  | Full or partial refund.                        |
+| `charges.cancel(uuid)`            | Cancel an unpaid charge.                       |
 
-`create` and `refund` automatically attach `X-Idempotency-Key` (UUIDv4) so retries on transient network failures don't double-process. Pass `idempotencyKey` to override.
+A charge is keyed by `uuid`; there is no numeric id. The amount is never a
+parameter — the server prices the charge from the product, or from the offer
+you name.
+
+`amount` on the response is the product's base price; `chargedTotal` is what the
+customer is actually charged. They differ on instalment card sales, where
+`chargedTotal` carries the instalment markup. Reconcile against `chargedTotal`.
+
+### Idempotency
+
+The SDK sends `X-Idempotency-Key` **only when you pass one**. It does not invent
+one: a key generated per call is different on every attempt, so it protects
+nothing while making the request look protected.
+
+Derive the key from something stable in your own domain, so a retry reproduces
+it:
+
+```dart
+await garu.charges.create(
+  productId: productId,
+  paymentMethod: ChargeMethod.creditCard,
+  customer: customer,
+  card: card,
+  idempotencyKey: 'booking:${booking.id}:charge',
+);
+```
+
+Without a key the SDK will not replay a failed `POST` — one attempt, so a
+timeout cannot become a second charge.
+
+## Offers
+
+Sell the same product at more than one price, each behind its own link. An offer
+overrides the price and nothing else; a bare product link keeps charging
+`product.value`.
+
+```dart
+final offer = await garu.offers.create(
+  'b3f2c1e8-6e4a-4b9f-9d1c-2a1f6c3d4e5f',
+  const CreateOfferParams(
+    name: 'Black Friday',
+    value: 97.0,             // reais, NOT centavos
+    slug: 'black-friday',
+  ),
+);
+
+// Hand out the link...
+print('https://garu.com.br/pay/$productUuid?offer=${offer.linkParam}');
+
+// ...or charge it directly. The SERVER resolves the price from the offer.
+await garu.charges.create(
+  productId: productUuid,
+  paymentMethod: ChargeMethod.pix,
+  customer: customer,
+  offer: offer.linkParam,
+);
+```
+
+A `slug` is public and guessable by anyone holding the product link. For pricing
+that should not circulate, omit it and let the link carry the offer id.
+
+| Method                              | Description                          |
+| ----------------------------------- | ------------------------------------ |
+| `offers.list(productUuid, {...})`   | A product's offers (active by default). |
+| `offers.get(offerId)`               | One offer.                           |
+| `offers.create(productUuid, params)`| Create an offer.                     |
+| `offers.update(offerId, params)`    | Reprice or deactivate.               |
+| `offers.del(offerId)`               | Delete — only while it has never sold. |
+
+## Money units
+
+Every monetary value in this SDK is in **reais** (decimal BRL), never centavos:
+`29.90` is R$29,90. This applies to `product.value`, `offer.value`,
+`RefundParams.amount`, `charge.amount` and `charge.chargedTotal`.
 
 ## Webhooks
 
@@ -87,7 +161,7 @@ Every error extends `GaruError`. Switch on the typed subclasses for handling:
 
 ```dart
 try {
-  await garu.charges.refund(4472, const RefundParams(amount: 1000));
+  await garu.charges.refund(chargeUuid, const RefundParams(amount: 10.0));
 } on GaruNotFoundError {
   // 404 — charge missing
 } on GaruValidationError catch (e) {

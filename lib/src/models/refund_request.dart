@@ -1,3 +1,5 @@
+import '../json.dart';
+
 /// A refund Garu has been ASKED to make and has not made.
 ///
 /// Garu never moves this money. A boleto cannot be reversed and Celcoin
@@ -54,7 +56,7 @@ class RefundRequest {
     return RefundRequest(
       uuid: (json['uuid'] as String?) ?? '',
       status: (json['status'] as String?) ?? 'pending',
-      amount: (json['amount'] as num?) ?? 0,
+      amount: toNumOr(json['amount'], 0),
       reason: json['reason'] as String?,
       installmentPlanId: json['installmentPlanId'] as String?,
       chargeId: json['chargeId'] as String?,

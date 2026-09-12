@@ -1,3 +1,5 @@
+import '../json.dart';
+
 /// A Garu product record. The `uuid` is the identifier accepted by the
 /// charge tools — pass it as `productId` to `charges.create`.
 class Product {
@@ -27,7 +29,7 @@ class Product {
         id: (json['id'] as num).toInt(),
         uuid: (json['uuid'] as String?) ?? '',
         name: (json['name'] as String?) ?? '',
-        value: json['value'] as num?,
+        value: toNumOrNull(json['value']),
         sellerId: (json['sellerId'] as num?)?.toInt(),
         pixAutomatic: (json['pixAutomatic'] as bool?) ?? false,
         raw: json,
