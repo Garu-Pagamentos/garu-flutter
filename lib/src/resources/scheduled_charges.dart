@@ -234,7 +234,11 @@ class ScheduledCharges {
   }
 
   /// Swap the saved card. The new payment method must belong to the same
-  /// customer.
+  /// customer AND already bill one of your charges for that customer: a
+  /// subscription, a scheduled charge, or a past attempt on one of your
+  /// series. A card the customer saved on your own payment page qualifies.
+  /// Any other card, another customer's included, answers 404
+  /// (`GaruNotFoundError`) like a card id that does not exist.
   Future<ScheduledChargeRecord> changePaymentMethod(
       String id, int paymentMethodId) async {
     final json = await _http.request(

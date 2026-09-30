@@ -37,7 +37,7 @@ void main() {
       expect(captured.url.path,
           '/api/v1/products/b3f2c1e8-6e4a-4b9f-9d1c-2a1f6c3d4e5f/offers');
       final body = jsonDecode(captured.body) as Map<String, dynamic>;
-      // R$97,00. The API floor is 0.01, which is only expressible in reais.
+      // R$97,00 in reais. The API refuses an offer below R$ 5,00.
       expect(body['value'], 97.0);
       expect(body['slug'], 'black-friday');
       expect(offer.value, 97.0);

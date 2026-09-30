@@ -95,7 +95,7 @@ final offer = await garu.offers.create(
   'b3f2c1e8-6e4a-4b9f-9d1c-2a1f6c3d4e5f',
   const CreateOfferParams(
     name: 'Black Friday',
-    value: 97.0,             // reais, NOT centavos
+    value: 97.0,             // reais, NOT centavos. Minimum R$ 5,00
     slug: 'black-friday',
   ),
 );
@@ -128,6 +128,21 @@ that should not circulate, omit it and let the link carry the offer id.
 Every monetary value in this SDK is in **reais** (decimal BRL), never centavos:
 `29.90` is R$29,90. This applies to `product.value`, `offer.value`,
 `RefundParams.amount`, `charge.amount` and `charge.chargedTotal`.
+
+## Minimum price
+
+A price you set must be at least **R$ 5,00**, the platform minimum price. The
+gateway answers 400 (`GaruValidationError`) otherwise.
+
+- **Product** (`CreateProductParams.value`, `UpdateProductParams.value`): `0`
+  or at least `5.00`. `0` — or no `value` on create — is a product with no
+  price: accepted, but it cannot be sold through its payment link. A
+  subscription product's own `value` is not checked.
+- **Offer** (`CreateOfferParams.value`, `UpdateOfferParams.value`): at least
+  `5.00`. `0` is refused.
+- **Updates** check the price only when you send one. Leave `value` null to keep
+  the current price: a product or offer priced below R$ 5,00 before the minimum
+  existed keeps selling, and renaming or deactivating it still works.
 
 ## Webhooks
 
