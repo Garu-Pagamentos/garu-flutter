@@ -127,7 +127,8 @@ that should not circulate, omit it and let the link carry the offer id.
 
 Every monetary value in this SDK is in **reais** (decimal BRL), never centavos:
 `29.90` is R$29,90. This applies to `product.value`, `offer.value`,
-`RefundParams.amount`, `charge.amount` and `charge.chargedTotal`.
+`CreateScheduledChargeParams.amount`, `RefundParams.amount`, `charge.amount`
+and `charge.chargedTotal`.
 
 ## Minimum price
 
@@ -140,6 +141,9 @@ gateway answers 400 (`GaruValidationError`) otherwise.
   subscription product's own `value` is not checked.
 - **Offer** (`CreateOfferParams.value`, `UpdateOfferParams.value`): at least
   `5.00`. `0` is refused.
+- **Scheduled charge** (`CreateScheduledChargeParams.amount`): at least `5.00`,
+  one-time and recurring alike. Charges created before the minimum existed keep
+  their amount and keep billing.
 - **Updates** check the price only when you send one. Leave `value` null to keep
   the current price: a product or offer priced below R$ 5,00 before the minimum
   existed keeps selling, and renaming or deactivating it still works.

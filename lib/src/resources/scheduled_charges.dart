@@ -25,6 +25,13 @@ class CreateScheduledChargeParams {
         );
 
   final int customerId;
+
+  /// Amount in **reais** (decimal BRL) — `297.50` is R$297,50, NOT centavos.
+  ///
+  /// Must be at least R$ 5,00, the platform minimum per charge, one-time and
+  /// recurring alike; a lower amount answers 400 (`GaruValidationError`).
+  /// Charges created before the minimum existed keep their amount and keep
+  /// billing.
   final num amount;
 
   /// `'one_time'` or `'recurring'`.
