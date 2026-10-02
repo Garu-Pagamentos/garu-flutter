@@ -89,6 +89,12 @@ class CreateProductParams {
   /// NOT centavos. Until 0.8.0 this field was an `int` documented as
   /// centavos, so `2990` meant R$29,90; the gateway read the same number as
   /// reais and priced the product at R$2.990,00.
+  ///
+  /// Must be at least R$ 5,00, the platform minimum price, or `0`. Omitting
+  /// it, or passing `0`, creates a product with no price: it is accepted, but
+  /// it cannot be sold through its payment link. From `0.01` to `4.99`, or a
+  /// negative value, the gateway answers 400. Not checked when
+  /// [isSubscription] is true: that price lives on the subscription prices.
   final num? value;
   final String? description;
   final String? image;
@@ -165,6 +171,11 @@ class UpdateProductParams {
   /// NOT centavos. Until 0.8.0 this field was an `int` documented as
   /// centavos, so `2990` meant R$29,90; the gateway read the same number as
   /// reais and priced the product at R$2.990,00.
+  ///
+  /// `0` (no price) or at least R$ 5,00, else 400. Leave it null to keep the
+  /// current price: the minimum is checked only when a price is sent (or a
+  /// subscription product turns one-time), so a product priced below R$ 5,00
+  /// before the minimum existed keeps selling.
   final num? value;
   final String? description;
   final String? image;

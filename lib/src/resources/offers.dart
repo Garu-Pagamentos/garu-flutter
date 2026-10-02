@@ -16,6 +16,10 @@ class CreateOfferParams {
   /// Price in **reais** (decimal BRL) — `97.0` is R$97,00, not 97 centavos. It
   /// may be HIGHER than the product's price: an offer works as a premium link
   /// just as well as a discount.
+  ///
+  /// Must be at least R$ 5,00, the platform minimum price; a lower value, `0`
+  /// included, answers 400. Unlike a product, an offer has no "no price"
+  /// option.
   final num value;
 
   /// Optional identifier for the link (`?offer=black-friday`): lowercase
@@ -42,7 +46,9 @@ class UpdateOfferParams {
 
   final String? name;
 
-  /// Price in **reais** (decimal BRL).
+  /// Price in **reais** (decimal BRL). At least R$ 5,00, else 400. Leave it
+  /// null to keep the current price, e.g. to deactivate an older offer priced
+  /// below the minimum.
   final num? value;
   final String? slug;
   final bool? isActive;
@@ -113,7 +119,7 @@ class Offers {
   ///   'b3f2c1e8-6e4a-4b9f-9d1c-2a1f6c3d4e5f',
   ///   const CreateOfferParams(
   ///     name: 'Black Friday',
-  ///     value: 97.0, // R$97,00 in reais, NOT centavos
+  ///     value: 97.0, // R$97,00 in reais, NOT centavos. Minimum R$ 5,00.
   ///     slug: 'black-friday',
   ///   ),
   /// );

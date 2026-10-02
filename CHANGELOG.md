@@ -1,3 +1,23 @@
+## Unreleased
+
+Documentation only. No code or behaviour change. It describes rules the gateway
+enforces since Garu v0.27.0 and v0.27.1 (2026-09-30).
+
+- **Minimum price R$ 5,00.** `CreateProductParams.value` /
+  `UpdateProductParams.value`: `0` (a product with no price, which cannot be
+  sold through its payment link) or at least `5.00`; from `0.01` to `4.99` the
+  gateway answers 400. `CreateOfferParams.value` / `UpdateOfferParams.value`:
+  at least `5.00`, `0` refused. On an update the rule applies only when a price
+  is sent. New "Minimum price" section in the README.
+- **`CreateScheduledChargeParams.amount`**: at least `5.00`, one-time and
+  recurring alike (Garu v0.27.1); a lower amount answers 400. Existing charges
+  keep their amount and keep billing. The field had no doc comment; it now says
+  it is in reais.
+- **`scheduledCharges.changePaymentMethod`**: the card must belong to the
+  series' customer and already bill one of your charges for that customer.
+  Any other card answers 404 (`GaruNotFoundError`); another customer's card
+  used to answer 400.
+
 ## 0.8.0
 
 The payment path in this SDK had never worked. Creating a charge posted to a

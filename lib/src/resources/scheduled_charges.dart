@@ -25,6 +25,13 @@ class CreateScheduledChargeParams {
         );
 
   final int customerId;
+
+  /// Amount in **reais** (decimal BRL) — `297.50` is R$297,50, NOT centavos.
+  ///
+  /// Must be at least R$ 5,00, the platform minimum per charge, one-time and
+  /// recurring alike; a lower amount answers 400 (`GaruValidationError`).
+  /// Charges created before the minimum existed keep their amount and keep
+  /// billing.
   final num amount;
 
   /// `'one_time'` or `'recurring'`.
@@ -234,7 +241,11 @@ class ScheduledCharges {
   }
 
   /// Swap the saved card. The new payment method must belong to the same
-  /// customer.
+  /// customer AND already bill one of your charges for that customer: a
+  /// subscription, a scheduled charge, or a past attempt on one of your
+  /// series. A card the customer saved on your own payment page qualifies.
+  /// Any other card, another customer's included, answers 404
+  /// (`GaruNotFoundError`) like a card id that does not exist.
   Future<ScheduledChargeRecord> changePaymentMethod(
       String id, int paymentMethodId) async {
     final json = await _http.request(
